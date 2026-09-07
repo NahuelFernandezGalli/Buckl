@@ -108,6 +108,6 @@ Loading the wardrobe, once every phase is in place:
 ## Cross-cutting concerns
 
 - Data model: see [Domain model](domain-model.md).
-- Security: the authentication and security document, added in a following pull request.
+- Security: see [Authentication and security](auth-and-security.md).
 - Privacy: the privacy and personal data document, added in a following pull request.
 - Decisions: see the [ADR log](../adr/README.md).

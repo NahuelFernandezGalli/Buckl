@@ -148,8 +148,8 @@ database schema document.
 ## Ownership and isolation
 
 - Every user-scoped table has a `user_id` column and an RLS policy comparing it with
-  `current_setting('app.user_id')`. The mechanism is described in the authentication and security
-  document.
+  `current_setting('app.user_id')`. See
+  [Authentication and security](auth-and-security.md).
 - `products` has no `user_id` and no RLS policy; it is read-only for the application role except
   through the import use cases.
 
