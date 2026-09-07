@@ -6,10 +6,11 @@ place where the design, the decisions and the vocabulary of the project live.
 
 ## Index
 
-| Document                                       | What it answers                                 |
-| ---------------------------------------------- | ----------------------------------------------- |
-| [Architecture](architecture/README.md)         | What Buckl is made of and how the pieces talk   |
-| [Architecture decision records](adr/README.md) | Why each technology and process choice was made |
+| Document                                       | What it answers                                  |
+| ---------------------------------------------- | ------------------------------------------------ |
+| [Architecture](architecture/README.md)         | What Buckl is made of and how the pieces talk    |
+| [Glossary](glossary.md)                        | The vocabulary and the exact names the code uses |
+| [Architecture decision records](adr/README.md) | Why each technology and process choice was made  |
 
 The index grows as documents land. Each pull request that adds a document adds its row here.
 
@@ -22,7 +23,7 @@ The index grows as documents land. Each pull request that adds a document adds i
   diagram files or images.
 - One `#` heading per file. Link between documents with relative paths.
 - Domain terms use the exact name the code uses (for example `Garment`, not "clothing item"). The
-  glossary, added in a following pull request, is the source of truth for those names.
+  [glossary](glossary.md) is the source of truth for those names.
 - Dates are written as `YYYY-MM-DD`.
 - A technical decision gets an ADR in `adr/`, following [the template](adr/template.md). A change
   to the model or the architecture updates the affected architecture document in the same pull
