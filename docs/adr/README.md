@@ -13,8 +13,12 @@ one and update the old one's status.
 
 ## Log
 
-| ADR                                          | Title                        | Status   | Date       |
-| -------------------------------------------- | ---------------------------- | -------- | ---------- |
-| [0001](0001-use-react-for-the-web-app.md)    | Use React for the web app    | Accepted | 2026-09-07 |
-| [0002](0002-use-dotnet-api-with-postgres.md) | Use a .NET API with Postgres | Accepted | 2026-09-07 |
-| [0003](0003-use-auth0-for-authentication.md) | Use Auth0 for authentication | Accepted | 2026-09-07 |
+| ADR                                                 | Title                                                                   | Status   | Date       |
+| --------------------------------------------------- | ----------------------------------------------------------------------- | -------- | ---------- |
+| [0001](0001-use-react-for-the-web-app.md)           | Use React for the web app                                               | Accepted | 2026-09-07 |
+| [0002](0002-use-dotnet-api-with-postgres.md)        | Use a .NET API with Postgres                                            | Accepted | 2026-09-07 |
+| [0003](0003-use-auth0-for-authentication.md)        | Use Auth0 for authentication                                            | Accepted | 2026-09-07 |
+| [0004](0004-use-neon-for-postgres-hosting.md)       | Use Neon for Postgres hosting                                           | Accepted | 2026-09-07 |
+| [0005](0005-use-cloudflare-r2-for-photo-storage.md) | Use Cloudflare R2 for photo storage                                     | Accepted | 2026-09-07 |
+| [0006](0006-deploy-web-as-static-site.md)           | Deploy the web app as a static site                                     | Accepted | 2026-09-07 |
+| [0007](0007-enforce-tenant-isolation-with-rls.md)   | Enforce tenant isolation with Row-Level Security via a session variable | Accepted | 2026-09-07 |
