@@ -52,7 +52,8 @@ Invariants:
   garment and `Restore()` on an active one are errors (`GarmentAlreadyArchived`,
   `GarmentNotArchived`).
 - Deleting a garment is not a domain operation in v1; archiving is the way to remove it from the
-  wardrobe. Physical deletion happens only with account deletion.
+  wardrobe. Physical deletion happens only with account deletion, described in
+  [Privacy and personal data](../privacy.md).
 
 ### Product
 

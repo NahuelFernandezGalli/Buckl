@@ -109,5 +109,5 @@ Loading the wardrobe, once every phase is in place:
 
 - Data model: see [Domain model](domain-model.md).
 - Security: see [Authentication and security](auth-and-security.md).
-- Privacy: the privacy and personal data document, added in a following pull request.
+- Privacy: see [Privacy and personal data](../privacy.md).
 - Decisions: see the [ADR log](../adr/README.md).

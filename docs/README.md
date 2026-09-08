@@ -6,11 +6,12 @@ place where the design, the decisions and the vocabulary of the project live.
 
 ## Index
 
-| Document                                       | What it answers                                  |
-| ---------------------------------------------- | ------------------------------------------------ |
-| [Architecture](architecture/README.md)         | What Buckl is made of and how the pieces talk    |
-| [Glossary](glossary.md)                        | The vocabulary and the exact names the code uses |
-| [Architecture decision records](adr/README.md) | Why each technology and process choice was made  |
+| Document                                       | What it answers                                                  |
+| ---------------------------------------------- | ---------------------------------------------------------------- |
+| [Architecture](architecture/README.md)         | What Buckl is made of and how the pieces talk                    |
+| [Glossary](glossary.md)                        | The vocabulary and the exact names the code uses                 |
+| [Privacy and personal data](privacy.md)        | What is stored about a person, where, why, and how it is deleted |
+| [Architecture decision records](adr/README.md) | Why each technology and process choice was made                  |
 
 The index grows as documents land. Each pull request that adds a document adds its row here.
 
