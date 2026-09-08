@@ -3,6 +3,7 @@
 - **Status:** Proposed | Accepted | Deprecated | Superseded by ADR-XXXX (link the file)
 - **Date:** YYYY-MM-DD
 - **Deciders:** NahuelFernandezGalli
+- **Supersedes:** ADR-XXXX (link the file; omit this line when nothing is replaced)
 
 ## Context
 

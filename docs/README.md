@@ -11,6 +11,7 @@ place where the design, the decisions and the vocabulary of the project live.
 | [Architecture](architecture/README.md)                  | What Buckl is made of and how the pieces talk                    |
 | [Glossary](glossary.md)                                 | The vocabulary and the exact names the code uses                 |
 | [Privacy and personal data](privacy.md)                 | What is stored about a person, where, why, and how it is deleted |
+| [Testing strategy](testing.md)                          | How each layer is tested and the cycle it follows                |
 | [Discarded and deferred features](deferred-features.md) | What was left out of v1 and why                                  |
 | [Architecture decision records](adr/README.md)          | Why each technology and process choice was made                  |
 

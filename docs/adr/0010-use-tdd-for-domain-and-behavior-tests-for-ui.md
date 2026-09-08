@@ -1,6 +1,6 @@
 # ADR-0010: Use TDD for domain and services, behavior tests for UI components
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0013](0013-use-bdd-for-front-end-features.md)
 - **Date:** 2026-09-07
 - **Deciders:** NahuelFernandezGalli
 
