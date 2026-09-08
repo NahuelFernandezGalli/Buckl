@@ -29,3 +29,7 @@ npm run build
 ```
 
 Commits follow Conventional Commits and are checked by local hooks and CI.
+
+## License
+
+Released under the [MIT License](LICENSE).
