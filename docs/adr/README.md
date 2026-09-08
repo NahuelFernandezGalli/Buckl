@@ -13,5 +13,8 @@ one and update the old one's status.
 
 ## Log
 
-| ADR | Title | Status | Date |
-| --- | ----- | ------ | ---- |
+| ADR                                          | Title                        | Status   | Date       |
+| -------------------------------------------- | ---------------------------- | -------- | ---------- |
+| [0001](0001-use-react-for-the-web-app.md)    | Use React for the web app    | Accepted | 2026-09-07 |
+| [0002](0002-use-dotnet-api-with-postgres.md) | Use a .NET API with Postgres | Accepted | 2026-09-07 |
+| [0003](0003-use-auth0-for-authentication.md) | Use Auth0 for authentication | Accepted | 2026-09-07 |
