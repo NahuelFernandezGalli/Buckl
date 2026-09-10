@@ -42,17 +42,17 @@ public sealed class Garment
 
     public ProductId? ProductId { get; }
 
-    public PhotoKey? PhotoKey { get; }
+    public PhotoKey? PhotoKey { get; private set; }
 
-    public Classification Classification { get; }
+    public Classification Classification { get; private set; }
 
-    public PurchaseInfo? PurchaseInfo { get; }
+    public PurchaseInfo? PurchaseInfo { get; private set; }
 
     public ImportSource Source { get; }
 
     public GarmentStatus Status { get; private set; }
 
-    public string? Notes { get; }
+    public string? Notes { get; private set; }
 
     public DateTimeOffset CreatedAt { get; }
 
@@ -103,6 +103,53 @@ public sealed class Garment
             now.ToUniversalTime());
     }
 
+    /// <summary>Replaces category, color and size label.</summary>
+    /// <param name="classification">The new classification.</param>
+    /// <param name="now">The caller's current instant; stored in UTC.</param>
+    public void UpdateClassification(Classification classification, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(classification);
+        EnsureEditable();
+
+        Classification = classification;
+        Touch(now);
+    }
+
+    /// <summary>Sets or clears what was paid and when.</summary>
+    /// <param name="purchaseInfo">The new purchase information, or null to clear it.</param>
+    /// <param name="now">The caller's current instant; stored in UTC.</param>
+    public void UpdatePurchaseInfo(PurchaseInfo? purchaseInfo, DateTimeOffset now)
+    {
+        EnsureEditable();
+
+        PurchaseInfo = purchaseInfo;
+        Touch(now);
+    }
+
+    /// <summary>Points the garment at a different photo, which must belong to its owner.</summary>
+    /// <param name="photoKey">The new photo key.</param>
+    /// <param name="now">The caller's current instant; stored in UTC.</param>
+    public void ReplacePhoto(PhotoKey photoKey, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(photoKey);
+        EnsureEditable();
+        EnsureOwnedBy(photoKey, OwnerId);
+
+        PhotoKey = photoKey;
+        Touch(now);
+    }
+
+    /// <summary>Sets or clears the free-text note.</summary>
+    /// <param name="notes">The new note, or null or blank to clear it.</param>
+    /// <param name="now">The caller's current instant; stored in UTC.</param>
+    public void UpdateNotes(string? notes, DateTimeOffset now)
+    {
+        EnsureEditable();
+
+        Notes = NormalizeNotes(notes);
+        Touch(now);
+    }
+
     /// <summary>Hides the garment from the wardrobe without deleting it.</summary>
     /// <param name="now">The caller's current instant; stored in UTC.</param>
     public void Archive(DateTimeOffset now)
@@ -132,6 +179,16 @@ public sealed class Garment
     }
 
     private void Touch(DateTimeOffset now) => UpdatedAt = now.ToUniversalTime();
+
+    /// <summary>An archived garment is a record, not part of the wardrobe: it must be restored
+    /// before it can change.</summary>
+    private void EnsureEditable()
+    {
+        if (IsArchived)
+        {
+            throw new ArchivedGarmentIsReadOnlyException(Id);
+        }
+    }
 
     private static void EnsureOwnedBy(PhotoKey? photoKey, UserId ownerId)
     {
