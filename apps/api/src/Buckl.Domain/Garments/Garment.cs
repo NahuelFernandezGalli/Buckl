@@ -50,15 +50,15 @@ public sealed class Garment
 
     public ImportSource Source { get; }
 
-    public GarmentStatus Status { get; }
+    public GarmentStatus Status { get; private set; }
 
     public string? Notes { get; }
 
     public DateTimeOffset CreatedAt { get; }
 
-    public DateTimeOffset UpdatedAt { get; }
+    public DateTimeOffset UpdatedAt { get; private set; }
 
-    public DateTimeOffset? ArchivedAt { get; }
+    public DateTimeOffset? ArchivedAt { get; private set; }
 
     public bool IsArchived => Status == GarmentStatus.Archived;
 
@@ -102,6 +102,36 @@ public sealed class Garment
             NormalizeNotes(notes),
             now.ToUniversalTime());
     }
+
+    /// <summary>Hides the garment from the wardrobe without deleting it.</summary>
+    /// <param name="now">The caller's current instant; stored in UTC.</param>
+    public void Archive(DateTimeOffset now)
+    {
+        if (IsArchived)
+        {
+            throw new GarmentAlreadyArchivedException(Id);
+        }
+
+        Status = GarmentStatus.Archived;
+        ArchivedAt = now.ToUniversalTime();
+        Touch(now);
+    }
+
+    /// <summary>Puts an archived garment back into the wardrobe.</summary>
+    /// <param name="now">The caller's current instant; stored in UTC.</param>
+    public void Restore(DateTimeOffset now)
+    {
+        if (!IsArchived)
+        {
+            throw new GarmentNotArchivedException(Id);
+        }
+
+        Status = GarmentStatus.Active;
+        ArchivedAt = null;
+        Touch(now);
+    }
+
+    private void Touch(DateTimeOffset now) => UpdatedAt = now.ToUniversalTime();
 
     private static void EnsureOwnedBy(PhotoKey? photoKey, UserId ownerId)
     {
