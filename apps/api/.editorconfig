@@ -35,7 +35,9 @@ dotnet_style_qualification_for_field = false:warning
 dotnet_style_qualification_for_property = false:warning
 dotnet_style_qualification_for_method = false:warning
 dotnet_style_predefined_type_for_locals_parameters_members = true:warning
-dotnet_style_prefer_auto_properties = true:warning
+# Kept as a suggestion rather than a warning: value objects normalize their input in an `init`
+# accessor, which needs a backing field the rule cannot see a reason for.
+dotnet_style_prefer_auto_properties = true:suggestion
 
 # Naming. Constants and static readonly fields are PascalCase; only private instance fields
 # take the leading underscore. The more specific rules come first so they win.
