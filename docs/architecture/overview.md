@@ -110,6 +110,7 @@ Loading the wardrobe, once every phase is in place:
 ## Cross-cutting concerns
 
 - Data model: see [Domain model](domain-model.md).
+- Database: see [Database schema](database-schema.md).
 - Security: see [Authentication and security](auth-and-security.md).
 - Privacy: see [Privacy and personal data](../privacy.md).
 - Testing: see [Testing strategy](../testing.md).

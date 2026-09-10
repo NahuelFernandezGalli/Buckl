@@ -73,6 +73,8 @@ sequenceDiagram
 6. Integration tests in phases 4 and 5 prove that two users cannot read or modify each other's
    rows, including attempts by id.
 
+The full DDL, roles and grants are in [Database schema](database-schema.md).
+
 ## CORS
 
 - The API allows only the web app's origins, from configuration: `http://localhost:5173` in
