@@ -93,9 +93,10 @@ Product and Garment draft. One adapter per store, isolated behind the common int
 A person with a Buckl account. Authentication is delegated to Auth0; the API keeps a local user
 record keyed by the Auth0 subject (`sub`) and uses its id as the owner of garments and outfits.
 
-**Wardrobe** — `Wardrobe` (use case naming, for example `ListWardrobe`)
+**Wardrobe** — `WardrobeFilter`, and use case naming such as `ListWardrobe`
 The set of a user's active garments, as the user sees it in the main screen: filterable by
-category, color and size, and searchable by text. Not an entity: a query over garments.
+category, color and size, and searchable by text. Not an entity: a query over garments, whose
+criteria are the `WardrobeFilter` value object.
 
 **Wear log** — `WearLog` _(phase 8)_
 The record that an outfit was worn on a given date, used to avoid recommending the same thing
