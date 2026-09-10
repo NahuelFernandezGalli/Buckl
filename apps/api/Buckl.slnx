@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Buckl.Domain/Buckl.Domain.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Buckl.Domain.Tests/Buckl.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
