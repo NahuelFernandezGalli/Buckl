@@ -18,6 +18,11 @@ The kind of garment: top, bottom, dress, outerwear, footwear, accessory, and the
 domain defines. A garment has exactly one category. Categories drive wardrobe filters and outfit
 composition rules. Value object.
 
+**Classification** — `Classification`
+The trio that describes a garment for filtering and outfit rules: its category, its dominant color
+and, optionally, its size label. Value object; a garment always has exactly one. See also:
+Category, Color, Size.
+
 **Color** — `Color`
 The dominant color of a garment, from a fixed palette the domain defines (so filters and outfit
 rules can compare colors). Value object.
