@@ -14,6 +14,27 @@ document are [ADR-0013](adr/0013-use-bdd-for-front-end-features.md) for testing 
 Everything runs under `npm run test` for the front end and the .NET test job for the API. Both are
 required checks on `main`, so a red test blocks the merge.
 
+## The .NET cycle
+
+Domain and application code follows red, green, refactor with xUnit:
+
+1. Write one failing test that names the rule (`Create_rejects_negative_amount`).
+2. Run it and confirm it fails for the expected reason (a missing type, a wrong result), not a
+   typo in the test.
+3. Write the least code that makes it pass.
+4. Refactor with the suite green.
+
+Conventions:
+
+- One test class per type under test (`MoneyTests`), or per behavior group when a type grows
+  (`GarmentCreationTests`, `GarmentArchivingTests`).
+- Test names are sentences in snake case: `Method_expected_outcome_when_condition`.
+- Domain exceptions are asserted by type and `Code`, never by message text.
+- Time comes from `TestClock`, which holds fixed values, never from `DateTimeOffset.UtcNow`.
+- Valid fixtures come from Object Mothers (`GarmentMother.Active()`), so a test shows only the
+  data that matters to it.
+- No mocking framework in the domain: the domain has no dependencies to mock.
+
 ## The front-end cycle
 
 Every feature that changes what a user can see or do goes through four steps, in this order. The
