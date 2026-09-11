@@ -28,3 +28,4 @@ one and update the old one's status.
 | [0011](0011-gate-merges-with-local-hooks-and-ci.md)          | Gate merges with local hooks and required CI checks                     | Accepted                                                     | 2026-09-07 |
 | [0012](0012-use-english-for-code-docs-and-ui.md)             | Use English for code, documentation and UI                              | Accepted                                                     | 2026-09-07 |
 | [0013](0013-use-bdd-for-front-end-features.md)               | Use TDD for the domain and BDD for front-end features                   | Accepted                                                     | 2026-09-08 |
+| [0014](0014-target-the-current-dotnet-lts.md)                | Target the current .NET LTS release and pin the SDK                     | Accepted                                                     | 2026-09-10 |

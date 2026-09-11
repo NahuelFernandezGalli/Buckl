@@ -13,12 +13,14 @@ Everything about the design, the decisions and the vocabulary lives in [`docs/`]
 ## Repository layout
 
 - `apps/web` — React + Vite + TypeScript front end (PWA).
-- `apps/api` — .NET API (added in a later phase).
+- `apps/api` — .NET solution: domain and its tests (phase 2); the remaining layers arrive in phase 4.
 - `docs` — architecture, ADRs, glossary, privacy.
 
 ## Development
 
-Requires Node 22 or newer.
+Requires Node 22 or newer and the .NET 10 SDK, pinned by `apps/api/global.json`.
+
+Web:
 
 ```bash
 npm install
@@ -28,7 +30,16 @@ npm run test
 npm run build
 ```
 
-Commits follow Conventional Commits and are checked by local hooks and CI.
+API (domain only until phase 4):
+
+```bash
+dotnet build apps/api
+dotnet test apps/api
+dotnet format apps/api --verify-no-changes
+```
+
+Commits follow Conventional Commits and are checked by local hooks and CI. Feature branches are
+merged into `develop`; `develop` is merged into `main` at the end of each phase.
 
 ## License
 
