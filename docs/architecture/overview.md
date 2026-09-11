@@ -90,7 +90,9 @@ is a .NET solution built by its own CI job rather than an npm workspace. `docs/`
 documentation.
 
 CI runs on every pull request: lint, typecheck, tests and build for the web, plus secret scanning
-and a dependency audit. The API job is added when the solution exists.
+and a dependency audit for both ecosystems. The API job (`CI / Api`) restores, builds with
+warnings as errors, verifies formatting and runs the .NET tests; it is a required check on
+`develop` and `main`.
 
 ## A request end to end
 
