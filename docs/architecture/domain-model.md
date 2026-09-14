@@ -125,50 +125,11 @@ API turns into a `404`.
 characters) and status, which defaults to active garments. `HasCriteria` tells a caller whether
 anything actually narrows the list; status alone does not count, since every listing has one.
 
-## Entity relationship diagram
+## Where the schema lives
 
-```mermaid
-erDiagram
-    USERS ||--o{ GARMENTS : owns
-    PRODUCTS o|--o{ GARMENTS : "is referenced by"
-
-    USERS {
-        uuid id PK
-        text auth0_subject UK "sub claim from Auth0"
-        timestamptz created_at
-    }
-    PRODUCTS {
-        uuid id PK
-        text name
-        text brand
-        text reference_image_url
-        text source_url
-        text source "manual | url | email"
-        timestamptz created_at
-    }
-    GARMENTS {
-        uuid id PK
-        uuid user_id FK "RLS: app.user_id"
-        uuid product_id FK "nullable"
-        text photo_key
-        text category
-        text color
-        text size
-        numeric purchase_amount
-        char3 purchase_currency
-        date purchase_date
-        text source
-        text status "active | archived"
-        text notes
-        timestamptz created_at
-        timestamptz updated_at
-        timestamptz archived_at
-    }
-```
-
-`outfits`, `outfit_garments` and `wear_logs` arrive in phase 8 and are added here then. The
-column-level schema (indexes, constraints, RLS policies) is specified in phase 2 in a separate
-database schema document.
+The column-level schema, including the entity relationship diagram, constraints, indexes, roles
+and Row-Level Security policies, is in [Database schema](database-schema.md). `outfits`,
+`outfit_garments` and `wear_logs` arrive in phase 8 and are added there.
 
 ## Ownership and isolation
 
