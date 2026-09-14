@@ -49,9 +49,11 @@ Invariants:
 - A garment's photo key always lives under its owner's prefix, so it can never point into another
   user's photos.
 - Domain events are not used in v1; use cases in phase 4 orchestrate side effects directly.
-- An archived garment cannot be edited; it must be restored first. `Archive()` on an archived
-  garment and `Restore()` on an active one are errors (`GarmentAlreadyArchived`,
-  `GarmentNotArchived`).
+- An archived garment cannot be edited; it must be restored first. `Archive(now)` on an archived
+  garment throws `GarmentAlreadyArchivedException`, `Restore(now)` on an active one throws
+  `GarmentNotArchivedException`, and any edit on an archived garment throws
+  `ArchivedGarmentIsReadOnlyException`.
+- Every mutation stamps `UpdatedAt` with the supplied instant, normalized to UTC.
 - Deleting a garment is not a domain operation in v1; archiving is the way to remove it from the
   wardrobe. Physical deletion happens only with account deletion, described in
   [Privacy and personal data](../privacy.md).
@@ -173,32 +175,35 @@ database schema document.
 Every code the domain can raise, so the API can map them to problem details without matching on
 message text. The table grows with each pull request that adds a rule.
 
-| Code                              | Raised by               | Meaning                               |
-| --------------------------------- | ----------------------- | ------------------------------------- |
-| `money.negative_amount`           | `Money.Create`          | Amount below zero                     |
-| `money.too_many_decimals`         | `Money.Create`          | More than two decimal places          |
-| `money.amount_too_large`          | `Money.Create`          | Above `numeric(12,2)` capacity        |
-| `money.invalid_currency`          | `Money.Create`          | Not three ASCII letters               |
-| `purchase_info.date_in_future`    | `PurchaseInfo.Create`   | Purchase date after today             |
-| `size.empty`                      | `Size.Create`           | Blank size label                      |
-| `size.too_long`                   | `Size.Create`           | Size label over 20 characters         |
-| `classification.unknown_category` | `Classification.Create` | Category outside the enum             |
-| `classification.unknown_color`    | `Classification.Create` | Color outside the enum                |
-| `product_id.empty`                | `ProductId` constructor | Empty GUID                            |
-| `product.name_empty`              | `Product.Create`        | Blank name                            |
-| `product.name_too_long`           | `Product.Create`        | Name over 200 characters              |
-| `product.brand_too_long`          | `Product.Create`        | Brand over 100 characters             |
-| `product.image_url_not_https`     | `Product.Create`        | Image URL not absolute https          |
-| `product.source_url_invalid`      | `Product.Create`        | Source URL not absolute http or https |
-| `product.unknown_source`          | `Product.Create`        | Import source outside the enum        |
-| `user_id.empty`                   | `UserId` constructor    | Empty GUID                            |
-| `garment_id.empty`                | `GarmentId` constructor | Empty GUID                            |
-| `photo_key.empty`                 | `PhotoKey.Create`       | Blank key                             |
-| `photo_key.too_long`              | `PhotoKey.Create`       | Key over 512 characters               |
-| `photo_key.outside_owner_prefix`  | `PhotoKey.Create`       | Key not under `users/<ownerId>/`      |
-| `garment.unknown_source`          | `Garment.Create`        | Import source outside the enum        |
-| `garment.photo_not_owned`         | `Garment.Create`        | Photo belongs to another user         |
-| `garment.notes_too_long`          | `Garment.Create`        | Notes over 500 characters             |
+| Code                              | Raised by                                 | Meaning                               |
+| --------------------------------- | ----------------------------------------- | ------------------------------------- |
+| `money.negative_amount`           | `Money.Create`                            | Amount below zero                     |
+| `money.too_many_decimals`         | `Money.Create`                            | More than two decimal places          |
+| `money.amount_too_large`          | `Money.Create`                            | Above `numeric(12,2)` capacity        |
+| `money.invalid_currency`          | `Money.Create`                            | Not three ASCII letters               |
+| `purchase_info.date_in_future`    | `PurchaseInfo.Create`                     | Purchase date after today             |
+| `size.empty`                      | `Size.Create`                             | Blank size label                      |
+| `size.too_long`                   | `Size.Create`                             | Size label over 20 characters         |
+| `classification.unknown_category` | `Classification.Create`                   | Category outside the enum             |
+| `classification.unknown_color`    | `Classification.Create`                   | Color outside the enum                |
+| `product_id.empty`                | `ProductId` constructor                   | Empty GUID                            |
+| `product.name_empty`              | `Product.Create`                          | Blank name                            |
+| `product.name_too_long`           | `Product.Create`                          | Name over 200 characters              |
+| `product.brand_too_long`          | `Product.Create`                          | Brand over 100 characters             |
+| `product.image_url_not_https`     | `Product.Create`                          | Image URL not absolute https          |
+| `product.source_url_invalid`      | `Product.Create`                          | Source URL not absolute http or https |
+| `product.unknown_source`          | `Product.Create`                          | Import source outside the enum        |
+| `user_id.empty`                   | `UserId` constructor                      | Empty GUID                            |
+| `garment_id.empty`                | `GarmentId` constructor                   | Empty GUID                            |
+| `photo_key.empty`                 | `PhotoKey.Create`                         | Blank key                             |
+| `photo_key.too_long`              | `PhotoKey.Create`                         | Key over 512 characters               |
+| `photo_key.outside_owner_prefix`  | `PhotoKey.Create`                         | Key not under `users/<ownerId>/`      |
+| `garment.unknown_source`          | `Garment.Create`                          | Import source outside the enum        |
+| `garment.photo_not_owned`         | `Garment.Create`                          | Photo belongs to another user         |
+| `garment.notes_too_long`          | `Garment.Create`                          | Notes over 500 characters             |
+| `garment.already_archived`        | `Garment.Archive`                         | Archiving an archived garment         |
+| `garment.not_archived`            | `Garment.Restore`                         | Restoring an active garment           |
+| `garment.archived_read_only`      | `Garment.Update*`, `Garment.ReplacePhoto` | Editing an archived garment           |
 
 ## Open questions
 
