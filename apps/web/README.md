@@ -6,3 +6,6 @@ Run from the repository root with the workspace scripts (`npm run dev -w web`, `
 web`) or from this directory with `npm run dev`, `npm run test`, `npm run build`.
 
 Design and architecture live in [`docs/`](../../docs/README.md).
+
+The folder layout, routing and data access are described in
+[`docs/architecture/web-app.md`](../../docs/architecture/web-app.md).
