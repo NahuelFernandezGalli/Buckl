@@ -22,14 +22,14 @@ Routes are declared in `src/app/routes.tsx` and mounted by `createBrowserRouter`
 ([ADR-0017](../adr/0017-use-react-router-for-client-side-routing.md)). Tests mount the same table
 with `createMemoryRouter` through `renderApp({ route })`.
 
-| Path                        | Screen                   |
-| --------------------------- | ------------------------ |
-| `/`                         | Redirects to `/wardrobe` |
-| `/wardrobe`                 | Wardrobe list            |
-| `/wardrobe/:garmentId`      | Garment detail           |
-| `/wardrobe/:garmentId/edit` | Garment edit             |
-| `/garments/new`             | Add garment              |
-| `*`                         | Not found                |
+| Path                                          | Screen                                                                                             |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `/`                                           | Redirects to `/wardrobe`                                                                           |
+| `/wardrobe?category=&color=&size=&q=&status=` | Wardrobe list; every filter is a query parameter so the address is shareable and survives a reload |
+| `/wardrobe/:garmentId`                        | Garment detail                                                                                     |
+| `/wardrobe/:garmentId/edit`                   | Garment edit                                                                                       |
+| `/garments/new`                               | Add garment                                                                                        |
+| `*`                                           | Not found                                                                                          |
 
 The shell (`AppLayout`) renders a header, a main navigation (bottom bar on phones, sidebar from
 768px) and the active page in an `Outlet`. Every page sets the document title with
