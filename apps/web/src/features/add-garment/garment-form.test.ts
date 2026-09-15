@@ -82,6 +82,23 @@ describe('validateGarmentForm', () => {
     expect(errorsOf({ ...valid, amount: '10000000000' }).amount).toBe('The price is too large')
   })
 
+  it('accepts a comma as the decimal separator', () => {
+    const result = validateGarmentForm({ ...valid, amount: '39,90' }, TODAY)
+    expect(result.ok && result.output.purchaseInfo?.price.amount).toBe(39.9)
+  })
+
+  it('does not accept thousands separators', () => {
+    expect(errorsOf({ ...valid, amount: '1.234,5' }).amount).toBe(
+      'Enter a price with at most two decimals',
+    )
+  })
+
+  it('asks for a well formatted price when only a minus sign is entered', () => {
+    expect(errorsOf({ ...valid, amount: '-' }).amount).toBe(
+      'Enter a price with at most two decimals',
+    )
+  })
+
   it('rejects a purchase date after today', () => {
     expect(errorsOf({ ...valid, purchaseDate: '2026-09-16' }).purchaseDate).toBe(
       'The purchase date cannot be in the future',

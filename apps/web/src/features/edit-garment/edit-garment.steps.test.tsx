@@ -52,7 +52,7 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
     And(
       'the form shows the price {int} in {string} paid on {string}',
       (_ctx, amount: number, currency: string, date: string) => {
-        expect(screen.getByLabelText('Price')).toHaveValue(amount)
+        expect(screen.getByLabelText('Price')).toHaveValue(String(amount))
         expect(screen.getByLabelText('Currency')).toHaveDisplayValue(currency)
         expect(screen.getByLabelText('Purchase date')).toHaveValue(date)
       },

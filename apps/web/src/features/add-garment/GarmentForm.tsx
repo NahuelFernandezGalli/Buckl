@@ -120,10 +120,8 @@ export function GarmentForm({
         <div className={styles.price}>
           <Input
             label="Price"
-            type="number"
+            type="text"
             inputMode="decimal"
-            min="0"
-            step="0.01"
             value={values.amount}
             error={errors.amount}
             onChange={(event) => update('amount', event.target.value)}
