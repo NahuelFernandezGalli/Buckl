@@ -40,13 +40,21 @@ export function WardrobePage() {
       />
       {wardrobe.status === 'loading' && <p role="status">Loading your wardrobe…</p>}
       {wardrobe.status === 'error' && <p role="alert">{wardrobe.message}</p>}
-      {wardrobe.status === 'ready' && wardrobe.garments.length === 0 && !filtering && (
-        <EmptyState
-          title="Your wardrobe is empty"
-          description="Photograph a garment to get started."
-          action={<ButtonLink to="/garments/new">Add your first garment</ButtonLink>}
-        />
-      )}
+      {wardrobe.status === 'ready' &&
+        wardrobe.garments.length === 0 &&
+        !filtering &&
+        (filter.status === 'archived' ? (
+          <EmptyState
+            title="No archived garments"
+            description="Garments you archive from their detail will show up here."
+          />
+        ) : (
+          <EmptyState
+            title="Your wardrobe is empty"
+            description="Photograph a garment to get started."
+            action={<ButtonLink to="/garments/new">Add your first garment</ButtonLink>}
+          />
+        ))}
       {wardrobe.status === 'ready' && wardrobe.garments.length === 0 && filtering && (
         <EmptyState
           title="No garment matches these filters"
