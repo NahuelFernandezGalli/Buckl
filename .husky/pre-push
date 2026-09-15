@@ -1,1 +1,1 @@
-npm run typecheck && npm run test && npm run build
+npm run typecheck && npm run test && npm run build && dotnet test apps/api --nologo
