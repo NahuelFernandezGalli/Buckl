@@ -9,7 +9,7 @@ import {
   MAX_SIZE_LENGTH,
 } from '../../domain/classification'
 import { MAX_SEARCH_TEXT_LENGTH } from '../../domain/wardrobe-filter'
-import { FILTER_PARAMS } from './wardrobe-filter-params'
+import { clearCriteria, CRITERION_PARAMS, FILTER_PARAMS } from './wardrobe-filter-params'
 import styles from './WardrobeFilters.module.css'
 
 export interface WardrobeFiltersProps {
@@ -19,12 +19,6 @@ export interface WardrobeFiltersProps {
 
 const categoryOptions = CATEGORIES.map((value) => ({ value, label: CATEGORY_LABELS[value] }))
 const colorOptions = COLORS.map((value) => ({ value, label: COLOR_LABELS[value] }))
-const criteria = [
-  FILTER_PARAMS.category,
-  FILTER_PARAMS.color,
-  FILTER_PARAMS.size,
-  FILTER_PARAMS.searchText,
-]
 
 export function WardrobeFilters({ params, onChange }: WardrobeFiltersProps) {
   const set = (name: string, value: string) => {
@@ -37,13 +31,9 @@ export function WardrobeFilters({ params, onChange }: WardrobeFiltersProps) {
     onChange(next)
   }
 
-  const clear = () => {
-    const next = new URLSearchParams(params)
-    for (const name of criteria) next.delete(name)
-    onChange(next)
-  }
+  const clear = () => onChange(clearCriteria(params))
 
-  const hasCriteria = criteria.some((name) => params.has(name))
+  const hasCriteria = CRITERION_PARAMS.some((name) => params.has(name))
 
   return (
     <form
