@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { createRef } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Button } from './Button'
 
@@ -32,5 +33,11 @@ describe('Button', () => {
   it('can be a submit button when asked', () => {
     render(<Button type="submit">Save</Button>)
     expect(screen.getByRole('button')).toHaveAttribute('type', 'submit')
+  })
+
+  it('forwards its ref to the button element', () => {
+    const ref = createRef<HTMLButtonElement>()
+    render(<Button ref={ref}>Save</Button>)
+    expect(ref.current).toBe(screen.getByRole('button', { name: 'Save' }))
   })
 })
