@@ -31,3 +31,4 @@ one and update the old one's status.
 | [0014](0014-target-the-current-dotnet-lts.md)                       | Target the current .NET LTS release and pin the SDK                     | Accepted                                                     | 2026-09-10 |
 | [0015](0015-signal-domain-rule-violations-with-typed-exceptions.md) | Signal domain rule violations with typed exceptions                     | Accepted                                                     | 2026-09-10 |
 | [0016](0016-store-enumerations-as-text-with-check-constraints.md)   | Store enumerations as text with check constraints                       | Accepted                                                     | 2026-09-10 |
+| [0017](0017-use-react-router-for-client-side-routing.md)            | Use React Router in data mode for client-side routing                   | Accepted                                                     | 2026-09-15 |

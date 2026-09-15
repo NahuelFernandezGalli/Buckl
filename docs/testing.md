@@ -95,6 +95,16 @@ describeFeature(feature, ({ Scenario }) => {
 })
 ```
 
+`vitest-cucumber` registers every step as its own Vitest test, so a global `afterEach(cleanup)`
+would unmount the screen between a `When` and its `Then`. Vitest runs without `globals` in this
+repository, so Testing Library does not clean up on its own; each steps file declares
+`AfterEachScenario(() => cleanup())` instead, and plain component tests call `afterEach(cleanup)`
+locally. Step callbacks receive the Vitest context first and any Cucumber expression parameters
+after it: `When('the user chooses {string}', (_ctx, label: string) => ...)`.
+
+The app shell (layout and navigation) is not a feature folder: its scenarios live next to the shell
+in `src/app/app-shell.feature`.
+
 `vitest-cucumber` fails the run when a scenario in the feature file has no implementation, or when
 a step is missing or named differently. That is what keeps the cycle honest: you cannot quietly
 skip a scenario you wrote.
@@ -166,8 +176,8 @@ indented under their scenario, as in the example above.
 
 [`@amiceli/vitest-cucumber`](https://www.npmjs.com/package/@amiceli/vitest-cucumber) reads the
 `.feature` files and runs the steps as Vitest tests, so there is no second runner, no extra
-configuration file and no new CI check. It is added as a development dependency in phase 3,
-alongside the first screen that needs it.
+configuration file and no new CI check. It was added as a development dependency in phase 3
+with the app shell.
 
 If the library ever stops being maintained, the `.feature` files remain plain Gherkin and can be
 run by another tool; only the step definition wrappers would change.
