@@ -7,7 +7,7 @@ import { EmptyState } from '../../components/EmptyState/EmptyState'
 import { hasCriteria } from '../../domain/wardrobe-filter'
 import { GarmentCard } from './GarmentCard'
 import { useWardrobe } from './useWardrobe'
-import { FILTER_PARAMS, parseWardrobeFilter } from './wardrobe-filter-params'
+import { clearCriteria, parseWardrobeFilter } from './wardrobe-filter-params'
 import { WardrobeFilters } from './WardrobeFilters'
 import styles from './WardrobePage.module.css'
 
@@ -18,18 +18,7 @@ export function WardrobePage() {
   const wardrobe = useWardrobe(filter)
   const filtering = hasCriteria(filter)
 
-  const showWholeWardrobe = () => {
-    const next = new URLSearchParams(searchParams)
-    for (const name of [
-      FILTER_PARAMS.category,
-      FILTER_PARAMS.color,
-      FILTER_PARAMS.size,
-      FILTER_PARAMS.searchText,
-    ]) {
-      next.delete(name)
-    }
-    setSearchParams(next, { replace: true })
-  }
+  const showWholeWardrobe = () => setSearchParams(clearCriteria(searchParams), { replace: true })
 
   return (
     <>
