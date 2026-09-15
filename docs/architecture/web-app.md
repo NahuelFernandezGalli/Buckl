@@ -34,3 +34,20 @@ with `createMemoryRouter` through `renderApp({ route })`.
 The shell (`AppLayout`) renders a header, a main navigation (bottom bar on phones, sidebar from
 768px) and the active page in an `Outlet`. Every page sets the document title with
 `usePageTitle`.
+
+## Design system
+
+Tokens live in `src/styles/tokens.css` and base styles in `src/styles/base.css`
+([ADR-0018](../adr/0018-style-with-css-modules-and-design-tokens.md)). Base components in
+`src/components` are the only place that knows the raw markup of a control:
+
+| Component    | Purpose                                                                      |
+| ------------ | ---------------------------------------------------------------------------- |
+| `Button`     | Primary, secondary and danger actions; `type="button"` unless told otherwise |
+| `Input`      | Labelled text input with hint and error bound by `aria-describedby`          |
+| `Select`     | Labelled select with an optional placeholder option                          |
+| `TextArea`   | Labelled multi-line input                                                    |
+| `Card`       | Surface with border, radius and shadow                                       |
+| `EmptyState` | Titled region with a description and a call to action                        |
+
+Feature components use tokens only, never raw colors or sizes.
