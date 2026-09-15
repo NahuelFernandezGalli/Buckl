@@ -29,3 +29,9 @@ Feature: Archive and restore a garment
     When the user restores it from its detail
     Then the detail is not marked as archived
     And the blue top is back in the wardrobe
+
+  Scenario: cancelling returns the user to the archive button
+    Given a blue top in the wardrobe
+    And the user chose to archive it from its detail
+    When the user cancels with the keyboard
+    Then the archive button has the focus

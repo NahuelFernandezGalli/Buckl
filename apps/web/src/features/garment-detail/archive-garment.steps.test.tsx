@@ -94,4 +94,19 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
       expect(await activeIds()).toEqual([BLUE_TOP_ID])
     })
   })
+
+  Scenario('cancelling returns the user to the archive button', ({ Given, And, When, Then }) => {
+    Given('a blue top in the wardrobe', () => seed(GarmentMother.active({ id: BLUE_TOP_ID })))
+    And('the user chose to archive it from its detail', async () => {
+      await chooseArchive()
+      expectConfirmation()
+    })
+    When('the user cancels with the keyboard', async () => {
+      await user.keyboard('{Escape}')
+    })
+    Then('the archive button has the focus', async () => {
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+      expect(screen.getByRole('button', { name: 'Archive' })).toHaveFocus()
+    })
+  })
 })
