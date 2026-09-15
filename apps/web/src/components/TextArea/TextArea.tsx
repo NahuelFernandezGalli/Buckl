@@ -1,4 +1,6 @@
-import { useId, type TextareaHTMLAttributes } from 'react'
+import type { TextareaHTMLAttributes } from 'react'
+import { FieldMessages } from '../Field/FieldMessages'
+import { useFieldDescription } from '../Field/useFieldDescription'
 import styles from '../Input/Input.module.css'
 
 export interface TextAreaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'id'> {
@@ -8,10 +10,7 @@ export interface TextAreaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaE
 }
 
 export function TextArea({ label, error, hint, className, ...rest }: TextAreaProps) {
-  const id = useId()
-  const hintId = `${id}-hint`
-  const errorId = `${id}-error`
-  const describedBy = [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ')
+  const { id, hintId, errorId, describedBy } = useFieldDescription(hint, error)
 
   return (
     <div className={styles.field}>
@@ -23,19 +22,10 @@ export function TextArea({ label, error, hint, className, ...rest }: TextAreaPro
         rows={3}
         className={[styles.control, className].filter(Boolean).join(' ')}
         aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy || undefined}
+        aria-describedby={describedBy}
         {...rest}
       />
-      {hint && (
-        <p id={hintId} className={styles.hint}>
-          {hint}
-        </p>
-      )}
-      {error && (
-        <p id={errorId} className={styles.error}>
-          {error}
-        </p>
-      )}
+      <FieldMessages hint={hint} hintId={hintId} error={error} errorId={errorId} />
     </div>
   )
 }

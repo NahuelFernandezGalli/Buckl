@@ -1,4 +1,6 @@
-import { useId, type SelectHTMLAttributes } from 'react'
+import type { SelectHTMLAttributes } from 'react'
+import { FieldMessages } from '../Field/FieldMessages'
+import { useFieldDescription } from '../Field/useFieldDescription'
 import styles from '../Input/Input.module.css'
 
 export interface SelectOption {
@@ -14,8 +16,7 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
 }
 
 export function Select({ label, options, placeholder, error, className, ...rest }: SelectProps) {
-  const id = useId()
-  const errorId = `${id}-error`
+  const { id, errorId, describedBy } = useFieldDescription(undefined, error)
 
   return (
     <div className={styles.field}>
@@ -26,7 +27,7 @@ export function Select({ label, options, placeholder, error, className, ...rest 
         id={id}
         className={[styles.control, className].filter(Boolean).join(' ')}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={describedBy}
         {...rest}
       >
         {placeholder !== undefined && <option value="">{placeholder}</option>}
@@ -36,11 +37,7 @@ export function Select({ label, options, placeholder, error, className, ...rest 
           </option>
         ))}
       </select>
-      {error && (
-        <p id={errorId} className={styles.error}>
-          {error}
-        </p>
-      )}
+      <FieldMessages error={error} errorId={errorId} />
     </div>
   )
 }

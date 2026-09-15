@@ -1,4 +1,6 @@
-import { useId, type InputHTMLAttributes } from 'react'
+import type { InputHTMLAttributes } from 'react'
+import { FieldMessages } from '../Field/FieldMessages'
+import { useFieldDescription } from '../Field/useFieldDescription'
 import styles from './Input.module.css'
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
@@ -8,10 +10,7 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 export function Input({ label, error, hint, className, ...rest }: InputProps) {
-  const id = useId()
-  const hintId = `${id}-hint`
-  const errorId = `${id}-error`
-  const describedBy = [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ')
+  const { id, hintId, errorId, describedBy } = useFieldDescription(hint, error)
 
   return (
     <div className={styles.field}>
@@ -22,19 +21,10 @@ export function Input({ label, error, hint, className, ...rest }: InputProps) {
         id={id}
         className={[styles.control, className].filter(Boolean).join(' ')}
         aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy || undefined}
+        aria-describedby={describedBy}
         {...rest}
       />
-      {hint && (
-        <p id={hintId} className={styles.hint}>
-          {hint}
-        </p>
-      )}
-      {error && (
-        <p id={errorId} className={styles.error}>
-          {error}
-        </p>
-      )}
+      <FieldMessages hint={hint} hintId={hintId} error={error} errorId={errorId} />
     </div>
   )
 }
