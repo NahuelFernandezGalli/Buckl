@@ -15,7 +15,7 @@ export interface GarmentDetailProps {
 
 export function GarmentDetail({ garment, actions }: GarmentDetailProps) {
   const { category, color, size } = garment.classification
-  const product = useProduct(garment.productId)
+  const productState = useProduct(garment.productId)
   const purchaseId = useId()
   const productId = useId()
   const notesId = useId()
@@ -66,18 +66,24 @@ export function GarmentDetail({ garment, actions }: GarmentDetailProps) {
       {garment.productId && (
         <section aria-labelledby={productId} className={styles.section}>
           <h2 id={productId}>Product</h2>
-          {product ? (
+          {productState.status === 'ready' && (
             <>
-              <p className={styles.productName}>{product.name}</p>
-              {product.brand && <p className={styles.muted}>{product.brand}</p>}
-              {product.sourceUrl && (
-                <a href={product.sourceUrl} target="_blank" rel="noopener noreferrer">
+              <p className={styles.productName}>{productState.product.name}</p>
+              {productState.product.brand && (
+                <p className={styles.muted}>{productState.product.brand}</p>
+              )}
+              {productState.product.sourceUrl && (
+                <a href={productState.product.sourceUrl} target="_blank" rel="noopener noreferrer">
                   View product page
                 </a>
               )}
             </>
-          ) : (
+          )}
+          {productState.status === 'loading' && (
             <p className={styles.muted}>Loading the product…</p>
+          )}
+          {productState.status === 'missing' && (
+            <p className={styles.muted}>This product is no longer available.</p>
           )}
         </section>
       )}
