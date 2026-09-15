@@ -3,15 +3,17 @@ import type { Garment } from './garment'
 import type { PurchaseInfo } from './purchase-info'
 import type { WardrobeFilter } from './wardrobe-filter'
 
+/** Photos cross the port as a Blob; the implementation decides how to store them. */
 export interface NewGarment {
-  photoUrl: string | null
+  photo: Blob | null
   classification: Classification
   purchaseInfo: PurchaseInfo | null
   notes: string | null
 }
 
 export interface GarmentChanges {
-  photoUrl?: string | null
+  /** Undefined keeps the current photo, null removes it, a Blob replaces it. */
+  photo?: Blob | null
   classification?: Classification
   purchaseInfo?: PurchaseInfo | null
   notes?: string | null

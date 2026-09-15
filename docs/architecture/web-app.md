@@ -51,9 +51,12 @@ The types in `src/domain` are a read model of the API: `photoUrl` is the URL the
 lower-case text stored in the database, and `purchaseInfo.date` is a `YYYY-MM-DD` string.
 Timestamps are ISO 8601 in UTC and are formatted to local time only in `src/lib/format.ts`.
 
-Photos in phase 3: `PhotoCapture` previews a picked file through an object URL; on save, the form
-turns the file into a data URL stored as `photoUrl`. Sample garments use `placeholderPhoto(color)`,
-a flat SVG. Both are replaced by presigned uploads to R2 in phase 6.
+Photos in phase 3: `PhotoCapture` previews a picked file through an object URL. On save, the form
+hands the file to its page as a `Blob`, which crosses the port unchanged (`NewGarment.photo`,
+`GarmentChanges.photo`, where leaving it out keeps the current photo and `null` removes it).
+`InMemoryGarmentRepository` turns the blob into a data URL and serves it as `photoUrl`; in phase 6
+the HTTP repository uploads it to R2 through a presigned URL instead, with no change to the screens.
+Sample garments use `placeholderPhoto(color)`, a flat SVG.
 
 ## Design system
 
