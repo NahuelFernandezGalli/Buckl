@@ -159,4 +159,16 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
       )
     })
   })
+
+  Scenario('a garment linked to a product that no longer exists', ({ Given, When, Then }) => {
+    Given('a blue top linked to a product that no longer exists', () => {
+      garments = [blueTop({ productId: 'gone', source: 'url' })]
+      products = []
+    })
+    When('the user opens the detail of the blue top', openDetail)
+    Then('the product section says the product is no longer available', async () => {
+      const section = await screen.findByRole('region', { name: 'Product' })
+      expect(await within(section).findByText('This product is no longer available.')).toBeVisible()
+    })
+  })
 })

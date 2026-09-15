@@ -42,3 +42,8 @@ Feature: Garment detail
     When the user opens the detail of a garment that does not exist
     Then a message says the garment is not in the wardrobe
     And a link back to the wardrobe is offered
+
+  Scenario: a garment linked to a product that no longer exists
+    Given a blue top linked to a product that no longer exists
+    When the user opens the detail of the blue top
+    Then the product section says the product is no longer available
