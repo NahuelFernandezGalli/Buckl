@@ -13,16 +13,15 @@ import {
   MAX_SIZE_LENGTH,
 } from '../../domain/classification'
 import { MAX_NOTES_LENGTH } from '../../domain/garment'
-import type { NewGarment } from '../../domain/garment-repository'
 import { CURRENCIES } from '../../domain/money'
 import { todayIsoDate } from '../../lib/dates'
-import { readFileAsDataUrl } from '../../lib/files'
 import { PhotoCapture, type PhotoSelection } from '../photo-capture/PhotoCapture'
 import {
   EMPTY_GARMENT_FORM,
   validateGarmentForm,
   type GarmentFormErrors,
   type GarmentFormValues,
+  type GarmentSubmission,
 } from './garment-form'
 import styles from './GarmentForm.module.css'
 
@@ -32,7 +31,7 @@ export interface GarmentFormProps {
   submitLabel: string
   /** Injected by tests; defaults to the local date at submit time. */
   today?: string
-  onSubmit: (garment: NewGarment) => Promise<void>
+  onSubmit: (submission: GarmentSubmission) => Promise<void>
 }
 
 const categoryOptions = CATEGORIES.map((value) => ({ value, label: CATEGORY_LABELS[value] }))
@@ -68,12 +67,8 @@ export function GarmentForm({
     setSubmitting(true)
     setSubmitError(null)
     try {
-      const photoUrl = photo
-        ? photo.file
-          ? await readFileAsDataUrl(photo.file)
-          : photo.previewUrl
-        : null
-      await onSubmit({ photoUrl, ...result.output })
+      // A selection without a file is the initial photo, left unchanged.
+      await onSubmit({ photo: photo ? (photo.file ?? undefined) : null, ...result.output })
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Could not save the garment.')
     } finally {

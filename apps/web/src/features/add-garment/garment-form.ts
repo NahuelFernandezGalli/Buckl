@@ -41,6 +41,14 @@ export interface GarmentFormOutput {
   notes: string | null
 }
 
+/**
+ * What the form hands to its page on save. `photo` is the picked file, `null` when there is no
+ * photo (removed, or never taken), and `undefined` when the initial photo is unchanged.
+ */
+export interface GarmentSubmission extends GarmentFormOutput {
+  photo?: Blob | null
+}
+
 export type GarmentFormResult =
   { ok: true; output: GarmentFormOutput } | { ok: false; errors: GarmentFormErrors }
 
