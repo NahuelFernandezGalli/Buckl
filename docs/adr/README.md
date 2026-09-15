@@ -34,3 +34,4 @@ one and update the old one's status.
 | [0017](0017-use-react-router-for-client-side-routing.md)            | Use React Router in data mode for client-side routing                   | Accepted                                                     | 2026-09-15 |
 | [0018](0018-style-with-css-modules-and-design-tokens.md)            | Style with CSS Modules and design tokens                                | Accepted                                                     | 2026-09-15 |
 | [0019](0019-access-data-through-repository-ports-in-the-web-app.md) | Access data in the web app through repository ports                     | Accepted                                                     | 2026-09-15 |
+| [0020](0020-use-vite-plugin-pwa-for-the-installable-shell.md)       | Use vite-plugin-pwa for the installable shell                           | Accepted                                                     | 2026-09-15 |
