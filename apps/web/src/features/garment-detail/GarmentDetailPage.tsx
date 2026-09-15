@@ -1,7 +1,9 @@
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { usePageTitle } from '../../app/usePageTitle'
+import { ButtonLink } from '../../components/Button/ButtonLink'
 import { garmentTitle } from '../../lib/garment-title'
 import { GarmentDetail } from './GarmentDetail'
+import { GarmentNotFound } from './GarmentNotFound'
 import { useGarment } from './useGarment'
 
 export function GarmentDetailPage() {
@@ -13,13 +15,7 @@ export function GarmentDetailPage() {
     return <p role="status">Loading the garment…</p>
   }
   if (state.status === 'not-found') {
-    return (
-      <>
-        <h1>Garment not found</h1>
-        <p>This garment is not in your wardrobe.</p>
-        <Link to="/wardrobe">Back to the wardrobe</Link>
-      </>
-    )
+    return <GarmentNotFound />
   }
   if (state.status === 'error') {
     return (
@@ -29,5 +25,17 @@ export function GarmentDetailPage() {
       </>
     )
   }
-  return <GarmentDetail garment={state.garment} />
+  const garment = state.garment
+  return (
+    <GarmentDetail
+      garment={garment}
+      actions={
+        garment.status === 'active' && (
+          <ButtonLink variant="secondary" to={`/wardrobe/${garment.id}/edit`}>
+            Edit
+          </ButtonLink>
+        )
+      }
+    />
+  )
 }

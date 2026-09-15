@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_GARMENT_FORM, validateGarmentForm, type GarmentFormValues } from './garment-form'
+import { GarmentMother } from '../../test/garment-mother'
+import {
+  EMPTY_GARMENT_FORM,
+  fromGarment,
+  validateGarmentForm,
+  type GarmentFormValues,
+} from './garment-form'
 
 const TODAY = '2026-09-15'
 
@@ -87,5 +93,33 @@ describe('validateGarmentForm', () => {
     expect(errorsOf({ ...valid, notes: 'x'.repeat(501) }).notes).toBe(
       'Notes can have at most 500 characters',
     )
+  })
+})
+
+describe('fromGarment', () => {
+  it('fills the form with the garment values', () => {
+    const garment = GarmentMother.active({
+      classification: { category: 'top', color: 'blue', size: 'M' },
+      purchaseInfo: { price: { amount: 45000, currency: 'ARS' }, date: '2026-03-15' },
+      notes: 'Bought in Madrid',
+    })
+    expect(fromGarment(garment)).toEqual({
+      category: 'top',
+      color: 'blue',
+      size: 'M',
+      amount: '45000',
+      currency: 'ARS',
+      purchaseDate: '2026-03-15',
+      notes: 'Bought in Madrid',
+    })
+  })
+
+  it('leaves optional fields empty and keeps the default currency', () => {
+    const garment = GarmentMother.active({
+      classification: { category: 'top', color: 'blue', size: null },
+      purchaseInfo: null,
+      notes: null,
+    })
+    expect(fromGarment(garment)).toEqual({ ...EMPTY_GARMENT_FORM, category: 'top', color: 'blue' })
   })
 })
