@@ -72,3 +72,10 @@ Tokens live in `src/styles/tokens.css` and base styles in `src/styles/base.css`
 | `ConfirmDialog` | Inline `alertdialog` for destructive actions; focus lands on the confirm button, Escape cancels |
 
 Feature components use tokens only, never raw colors or sizes.
+
+## Installable shell
+
+`vite-plugin-pwa` generates `manifest.webmanifest` and a Workbox service worker at build time
+([ADR-0020](../adr/0020-use-vite-plugin-pwa-for-the-installable-shell.md)). The service worker
+precaches the build output only, so the app shell opens offline; garments and photos are not
+cached by it. Icons come from `public/icon.svg` through `npm run pwa:assets -w web`.
