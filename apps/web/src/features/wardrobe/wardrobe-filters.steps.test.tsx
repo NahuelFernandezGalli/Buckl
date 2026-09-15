@@ -137,4 +137,24 @@ describeFeature(feature, ({ Background, Scenario, ScenarioOutline, AfterEachScen
       expect(screen.getByRole('button', { name: 'Show the whole wardrobe' })).toBeVisible()
     })
   })
+
+  Scenario('archived garments can be listed on request', ({ Given, When, Then }) => {
+    Given('the wardrobe also has an archived grey top', () => {
+      repository = new InMemoryGarmentRepository(
+        [
+          ...baseGarments('oxford'),
+          GarmentMother.archived({
+            id: 'grey-top',
+            classification: { category: 'top', color: 'grey', size: 'L' },
+          }),
+        ],
+        { products },
+      )
+    })
+    When('the user asks to show archived garments', async () => {
+      openWardrobe()
+      await user.click(await screen.findByLabelText('Show archived'))
+    })
+    Then('only the grey top is listed', () => expectOnlyListed('Grey top'))
+  })
 })

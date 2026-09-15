@@ -43,3 +43,8 @@ Feature: Wardrobe filters and search
     When the user filters the wardrobe by color "Pink"
     Then a message says no garment matches the filters
     And a way to show the whole wardrobe is offered
+
+  Scenario: archived garments can be listed on request
+    Given the wardrobe also has an archived grey top
+    When the user asks to show archived garments
+    Then only the grey top is listed
