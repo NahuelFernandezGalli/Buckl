@@ -61,13 +61,14 @@ Tokens live in `src/styles/tokens.css` and base styles in `src/styles/base.css`
 ([ADR-0018](../adr/0018-style-with-css-modules-and-design-tokens.md)). Base components in
 `src/components` are the only place that knows the raw markup of a control:
 
-| Component    | Purpose                                                                      |
-| ------------ | ---------------------------------------------------------------------------- |
-| `Button`     | Primary, secondary and danger actions; `type="button"` unless told otherwise |
-| `Input`      | Labelled text input with hint and error bound by `aria-describedby`          |
-| `Select`     | Labelled select with an optional placeholder option                          |
-| `TextArea`   | Labelled multi-line input                                                    |
-| `Card`       | Surface with border, radius and shadow                                       |
-| `EmptyState` | Titled region with a description and a call to action                        |
+| Component       | Purpose                                                                                         |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| `Button`        | Primary, secondary and danger actions; `type="button"` unless told otherwise                    |
+| `Input`         | Labelled text input with hint and error bound by `aria-describedby`                             |
+| `Select`        | Labelled select with an optional placeholder option                                             |
+| `TextArea`      | Labelled multi-line input                                                                       |
+| `Card`          | Surface with border, radius and shadow                                                          |
+| `EmptyState`    | Titled region with a description and a call to action                                           |
+| `ConfirmDialog` | Inline `alertdialog` for destructive actions; focus lands on the confirm button, Escape cancels |
 
 Feature components use tokens only, never raw colors or sizes.
