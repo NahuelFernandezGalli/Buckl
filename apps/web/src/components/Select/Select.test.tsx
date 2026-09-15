@@ -24,8 +24,10 @@ describe('Select', () => {
     expect(screen.getByLabelText('Category')).toHaveValue('bottom')
   })
 
-  it('exposes the error as its description', () => {
+  it('exposes the error as its description and marks itself invalid', () => {
     render(<Select label="Category" options={options} error="Choose a category" />)
-    expect(screen.getByLabelText('Category')).toHaveAccessibleDescription('Choose a category')
+    const select = screen.getByLabelText('Category')
+    expect(select).toBeInvalid()
+    expect(select).toHaveAccessibleDescription('Choose a category')
   })
 })
