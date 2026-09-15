@@ -35,6 +35,26 @@ The shell (`AppLayout`) renders a header, a main navigation (bottom bar on phone
 768px) and the active page in an `Outlet`. Every page sets the document title with
 `usePageTitle`.
 
+## Data access
+
+Screens depend on the ports in `src/domain/garment-repository.ts` and
+`src/domain/product-repository.ts` ([ADR-0019](../adr/0019-access-data-through-repository-ports-in-the-web-app.md)).
+`RepositoriesProvider` injects an implementation at the root; `useRepositories()` returns it.
+
+| Phase | Implementation                                                   |
+| ----- | ---------------------------------------------------------------- |
+| 3     | `InMemoryGarmentRepository` seeded with `sample-wardrobe.ts`     |
+| 6     | Repository over the typed HTTP client; in-memory stays for tests |
+
+The types in `src/domain` are a read model of the API: `photoUrl` is the URL the browser can load
+(a signed URL from the API, a data URL while the app runs on mock data), enumerations are the
+lower-case text stored in the database, and `purchaseInfo.date` is a `YYYY-MM-DD` string.
+Timestamps are ISO 8601 in UTC and are formatted to local time only in `src/lib/format.ts`.
+
+Photos in phase 3: `PhotoCapture` previews a picked file through an object URL; on save, the form
+turns the file into a data URL stored as `photoUrl`. Sample garments use `placeholderPhoto(color)`,
+a flat SVG. Both are replaced by presigned uploads to R2 in phase 6.
+
 ## Design system
 
 Tokens live in `src/styles/tokens.css` and base styles in `src/styles/base.css`
