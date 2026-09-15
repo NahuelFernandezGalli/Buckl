@@ -79,6 +79,14 @@ export function WardrobeFilters({ params, onChange }: WardrobeFiltersProps) {
         value={params.get(FILTER_PARAMS.size) ?? ''}
         onChange={(event) => set(FILTER_PARAMS.size, event.target.value)}
       />
+      <label className={styles.toggle}>
+        <input
+          type="checkbox"
+          checked={params.get(FILTER_PARAMS.status) === 'archived'}
+          onChange={(event) => set(FILTER_PARAMS.status, event.target.checked ? 'archived' : '')}
+        />
+        Show archived
+      </label>
       {hasCriteria && (
         <Button variant="secondary" onClick={clear}>
           Clear filters
