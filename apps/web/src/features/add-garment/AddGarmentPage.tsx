@@ -11,7 +11,7 @@ export function AddGarmentPage() {
 
   const save = async ({ photo, ...details }: GarmentSubmission) => {
     const created = await garments.create({ ...details, photo: photo ?? null })
-    navigate(`/wardrobe/${created.id}`)
+    navigate(`/wardrobe/${created.id}`, { replace: true })
   }
 
   return (

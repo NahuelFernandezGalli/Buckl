@@ -44,7 +44,7 @@ export function EditGarmentPage() {
   const save = async (submission: GarmentSubmission) => {
     const changes: GarmentChanges = submission
     await garments.update(garment.id, changes)
-    navigate(`/wardrobe/${garment.id}`)
+    navigate(`/wardrobe/${garment.id}`, { replace: true })
   }
 
   return (
