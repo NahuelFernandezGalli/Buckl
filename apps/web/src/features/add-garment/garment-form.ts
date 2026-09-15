@@ -4,6 +4,7 @@ import {
   type Classification,
   type Color,
 } from '../../domain/classification'
+import type { Garment } from '../../domain/garment'
 import { MAX_NOTES_LENGTH } from '../../domain/garment'
 import { MAX_AMOUNT } from '../../domain/money'
 import type { PurchaseInfo } from '../../domain/purchase-info'
@@ -42,6 +43,20 @@ export interface GarmentFormOutput {
 
 export type GarmentFormResult =
   { ok: true; output: GarmentFormOutput } | { ok: false; errors: GarmentFormErrors }
+
+/** Prefills the form with a garment's current values, for editing. */
+export function fromGarment(garment: Garment): GarmentFormValues {
+  const { category, color, size } = garment.classification
+  return {
+    category,
+    color,
+    size: size ?? '',
+    amount: garment.purchaseInfo ? String(garment.purchaseInfo.price.amount) : '',
+    currency: garment.purchaseInfo?.price.currency ?? EMPTY_GARMENT_FORM.currency,
+    purchaseDate: garment.purchaseInfo?.date ?? '',
+    notes: garment.notes ?? '',
+  }
+}
 
 const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/
 
