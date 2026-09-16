@@ -60,7 +60,7 @@ Feature: Wardrobe list
     Then an invitation to add the first garment is shown
 
   Scenario: garments are listed with their photo and category
-    Given a wardrobe with a blue shirt and black jeans
+    Given a wardrobe with a blue top and a black bottom
     When the user opens the wardrobe
     Then both garments are listed
     And each one shows its photo and its category
@@ -71,35 +71,50 @@ Feature: Wardrobe list
 Bind each step to code and run the suite. The scenario must fail, and it must fail for the reason
 you expect: the behavior is missing, not the test file is broken.
 
+An excerpt of `src/features/wardrobe/wardrobe-list.steps.test.tsx`:
+
 ```tsx
 import { describeFeature, loadFeature } from '@amiceli/vitest-cucumber'
-import { render, screen } from '@testing-library/react'
+import { cleanup, screen } from '@testing-library/react'
 import { expect } from 'vitest'
+import { InMemoryGarmentRepository } from '../../data/in-memory-garment-repository'
+import { renderApp } from '../../test/render-app'
 
-const feature = await loadFeature('src/features/wardrobe/wardrobe-list.feature')
+const feature = await loadFeature('./wardrobe-list.feature')
 
-describeFeature(feature, ({ Scenario }) => {
+describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
+  AfterEachScenario(() => cleanup())
+
+  let repository: InMemoryGarmentRepository
+
+  const openWardrobe = () => {
+    renderApp({ route: '/wardrobe', repositories: { garments: repository } })
+  }
+
   Scenario('an empty wardrobe invites the first garment', ({ Given, When, Then }) => {
-    let repository: GarmentRepository
-
     Given('a wardrobe with no garments', () => {
       repository = new InMemoryGarmentRepository([])
     })
-    When('the user opens the wardrobe', () => {
-      render(<WardrobeList repository={repository} />)
-    })
+    When('the user opens the wardrobe', openWardrobe)
     Then('an invitation to add the first garment is shown', async () => {
-      expect(await screen.findByRole('button', { name: /add your first garment/i })).toBeVisible()
+      expect(await screen.findByRole('link', { name: 'Add your first garment' })).toHaveAttribute(
+        'href',
+        '/garments/new',
+      )
     })
   })
+
+  // One Scenario block per scenario in the feature file.
 })
 ```
 
+`loadFeature` takes a path relative to the steps file, starting with `./`. `renderApp` mounts the
+real routes in a memory router, with the repositories the scenario seeds.
+
 `vitest-cucumber` registers every step as its own Vitest test, so a global `afterEach(cleanup)`
 would unmount the screen between a `When` and its `Then`. Vitest runs without `globals` in this
-repository, so Testing Library does not clean up on its own; each steps file declares
-`AfterEachScenario(() => cleanup())` instead, and plain component tests call `afterEach(cleanup)`
-locally. Step callbacks receive the Vitest context first and any Cucumber expression parameters
+repository, so Testing Library does not clean up on its own; that is why each steps file declares
+`AfterEachScenario`, and plain component tests call `afterEach(cleanup)` locally. Step callbacks receive the Vitest context first and any Cucumber expression parameters
 after it: `When('the user chooses {string}', (_ctx, label: string) => ...)`.
 
 The app shell (layout and navigation) is not a feature folder: its scenarios live next to the shell
@@ -157,7 +172,9 @@ Scenarios live next to the feature they describe, inside `apps/web/src/features/
 src/features/wardrobe/
 ├── wardrobe-list.feature         the scenarios, in Gherkin
 ├── wardrobe-list.steps.test.tsx  the step definitions, run by Vitest
-├── WardrobeList.tsx              the component
+├── WardrobePage.tsx              the page
+├── GarmentCard.tsx               a component of the page
+├── useWardrobe.ts                the hook that loads the garments through the repository
 └── ...
 ```
 

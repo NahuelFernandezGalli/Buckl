@@ -52,7 +52,7 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
     And(
       'the form shows the price {int} in {string} paid on {string}',
       (_ctx, amount: number, currency: string, date: string) => {
-        expect(screen.getByLabelText('Price')).toHaveValue(amount)
+        expect(screen.getByLabelText('Price')).toHaveValue(String(amount))
         expect(screen.getByLabelText('Currency')).toHaveDisplayValue(currency)
         expect(screen.getByLabelText('Purchase date')).toHaveValue(date)
       },
@@ -122,6 +122,28 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
       expect(
         await screen.findByRole('heading', { level: 1, name: 'Garment not found' }),
       ).toBeVisible()
+    })
+  })
+
+  Scenario('replacing the photo updates the garment', ({ Given, When, And, Then }) => {
+    Given('a blue top sized M', () => seed(blueTop()))
+    When('the user opens the edit screen of the blue top', openEdit)
+    And('replaces the photo with one from the gallery', async () => {
+      await user.click(await screen.findByRole('button', { name: 'Retake photo' }))
+      await user.upload(
+        screen.getByLabelText('Choose from gallery'),
+        new File(['new photo'], 'new-top.png', { type: 'image/png' }),
+      )
+    })
+    And('saves the changes', async () => {
+      await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    })
+    Then('the detail shows the new photo', async () => {
+      // The seeded photo is an SVG data URL too, so match the uploaded PNG, not just data:image/.
+      expect(await screen.findByRole('img', { name: 'Blue top' })).toHaveAttribute(
+        'src',
+        expect.stringMatching(/^data:image\/png;base64,/),
+      )
     })
   })
 })

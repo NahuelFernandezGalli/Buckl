@@ -8,6 +8,7 @@ import type { Garment } from '../domain/garment'
 import type { GarmentChanges, GarmentRepository, NewGarment } from '../domain/garment-repository'
 import type { Product } from '../domain/product'
 import type { WardrobeFilter } from '../domain/wardrobe-filter'
+import { readFileAsDataUrl } from '../lib/files'
 
 export interface InMemoryGarmentRepositoryOptions {
   /** Products the search text can match by name and brand. */
@@ -49,7 +50,7 @@ export class InMemoryGarmentRepository implements GarmentRepository {
     const garment: Garment = {
       id: this.generateId(),
       productId: null,
-      photoUrl: input.photoUrl,
+      photoUrl: input.photo ? await readFileAsDataUrl(input.photo) : null,
       classification: input.classification,
       purchaseInfo: input.purchaseInfo,
       source: 'manual',
@@ -68,9 +69,15 @@ export class InMemoryGarmentRepository implements GarmentRepository {
     if (current.status === 'archived') {
       throw new ArchivedGarmentIsReadOnlyError(id)
     }
+    const photoUrl =
+      changes.photo === undefined
+        ? current.photoUrl
+        : changes.photo === null
+          ? null
+          : await readFileAsDataUrl(changes.photo)
     const updated: Garment = {
       ...current,
-      photoUrl: changes.photoUrl !== undefined ? changes.photoUrl : current.photoUrl,
+      photoUrl,
       classification: changes.classification ?? current.classification,
       purchaseInfo:
         changes.purchaseInfo !== undefined ? changes.purchaseInfo : current.purchaseInfo,

@@ -35,3 +35,10 @@ Feature: Edit a garment
     Given a wardrobe with no garments
     When the user opens the edit screen of a garment that does not exist
     Then a message says the garment is not in the wardrobe
+
+  Scenario: replacing the photo updates the garment
+    Given a blue top sized M
+    When the user opens the edit screen of the blue top
+    And replaces the photo with one from the gallery
+    And saves the changes
+    Then the detail shows the new photo
