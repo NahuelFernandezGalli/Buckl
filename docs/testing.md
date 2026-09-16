@@ -145,6 +145,9 @@ the safety net, so this step is where design happens rather than in step 3.
   tests.
 - Third-party behavior. We test that we call the Auth0 SDK and how we react to its answers, not
   that Auth0 works.
+- Base components of the design system (`Button`, `Input`, `Select`, and so on). They are
+  building blocks, not features: they get component tests with Testing Library that assert
+  accessible behavior (labels, descriptions, validity, click handling), never appearance.
 
 ## File layout
 
