@@ -1,0 +1,21 @@
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-4);
+}
+
+.filters > :first-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .filters {
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  }
+
+  .filters > :first-child {
+    grid-column: auto;
+  }
+}
