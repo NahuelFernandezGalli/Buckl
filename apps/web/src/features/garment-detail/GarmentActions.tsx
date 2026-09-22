@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRepositories } from '../../app/useRepositories'
 import { Button } from '../../components/Button/Button'
 import { ButtonLink } from '../../components/Button/ButtonLink'
@@ -14,6 +14,13 @@ export function GarmentActions({ garment, onChanged }: GarmentActionsProps) {
   const { garments } = useRepositories()
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const archiveButton = useRef<HTMLButtonElement>(null)
+
+  // The confirmation takes the focus when it opens; give it back to the button that opened it.
+  const cancelArchive = () => {
+    setConfirming(false)
+    archiveButton.current?.focus()
+  }
 
   const run = async (action: () => Promise<Garment>) => {
     setError(null)
@@ -40,7 +47,7 @@ export function GarmentActions({ garment, onChanged }: GarmentActionsProps) {
       <ButtonLink variant="secondary" to={`/wardrobe/${garment.id}/edit`}>
         Edit
       </ButtonLink>
-      <Button variant="danger" onClick={() => setConfirming(true)}>
+      <Button ref={archiveButton} variant="danger" onClick={() => setConfirming(true)}>
         Archive
       </Button>
       {confirming && (
@@ -50,7 +57,7 @@ export function GarmentActions({ garment, onChanged }: GarmentActionsProps) {
           confirmLabel="Yes, archive it"
           danger
           onConfirm={() => run(() => garments.archive(garment.id))}
-          onCancel={() => setConfirming(false)}
+          onCancel={cancelArchive}
         />
       )}
       {error && <p role="alert">{error}</p>}

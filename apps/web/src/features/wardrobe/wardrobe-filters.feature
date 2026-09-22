@@ -45,6 +45,6 @@ Feature: Wardrobe filters and search
     And a way to show the whole wardrobe is offered
 
   Scenario: archived garments can be listed on request
-    Given the wardrobe also has an archived grey top
+    Given an archived grey top is also on record
     When the user asks to show archived garments
     Then only the grey top is listed

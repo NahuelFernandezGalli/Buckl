@@ -63,6 +63,10 @@ flowchart TB
 | Photo storage | Cloudflare R2 (S3-compatible)           | Garment photos, accessed only through presigned URLs                           | R2 free tier                                 |
 | Identity      | Auth0                                   | Sign-up, login, tokens; Buckl stores no passwords                              | Auth0 free tier                              |
 
+The web app is an installable PWA. Its service worker caches only the app shell (the build output),
+so the app opens offline but never serves garments or photos from its cache; see
+[ADR-0020](../adr/0020-use-vite-plugin-pwa-for-the-installable-shell.md).
+
 ## API layering
 
 The API follows a layered (clean) architecture with dependencies pointing inward only.

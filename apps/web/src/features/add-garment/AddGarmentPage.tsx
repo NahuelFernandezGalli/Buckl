@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { usePageTitle } from '../../app/usePageTitle'
 import { useRepositories } from '../../app/useRepositories'
-import type { NewGarment } from '../../domain/garment-repository'
+import type { GarmentSubmission } from './garment-form'
 import { GarmentForm } from './GarmentForm'
 
 export function AddGarmentPage() {
@@ -9,9 +9,9 @@ export function AddGarmentPage() {
   const { garments } = useRepositories()
   const navigate = useNavigate()
 
-  const save = async (garment: NewGarment) => {
-    const created = await garments.create(garment)
-    navigate(`/wardrobe/${created.id}`)
+  const save = async ({ photo, ...details }: GarmentSubmission) => {
+    const created = await garments.create({ ...details, photo: photo ?? null })
+    navigate(`/wardrobe/${created.id}`, { replace: true })
   }
 
   return (

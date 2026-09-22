@@ -12,6 +12,8 @@ import { InMemoryGarmentRepository } from './in-memory-garment-repository'
 
 const NOW = new Date('2026-09-15T12:00:00.000Z')
 
+const photoBlob = (content: string) => new Blob([content], { type: 'image/jpeg' })
+
 function repositoryWith(...garments: Array<Partial<Garment>>) {
   let counter = 0
   return new InMemoryGarmentRepository(
@@ -109,7 +111,7 @@ describe('InMemoryGarmentRepository', () => {
     it('assigns an id, timestamps, manual source and active status', async () => {
       const repository = repositoryWith()
       const garment = await repository.create({
-        photoUrl: null,
+        photo: null,
         classification: { category: 'dress', color: 'red', size: 'S' },
         purchaseInfo: { price: { amount: 45000, currency: 'ARS' }, date: '2026-03-15' },
         notes: null,
@@ -122,8 +124,20 @@ describe('InMemoryGarmentRepository', () => {
         updatedAt: '2026-09-15T12:00:00.000Z',
         archivedAt: null,
         productId: null,
+        photoUrl: null,
       })
       expect((await repository.list(DEFAULT_WARDROBE_FILTER)).map((g) => g.id)).toEqual(['new-1'])
+    })
+
+    it('stores a photo blob as a data URL', async () => {
+      const repository = repositoryWith()
+      const garment = await repository.create({
+        photo: photoBlob('photo'),
+        classification: { category: 'dress', color: 'red', size: 'S' },
+        purchaseInfo: null,
+        notes: null,
+      })
+      expect(garment.photoUrl).toBe('data:image/jpeg;base64,cGhvdG8=')
     })
   })
 
@@ -146,6 +160,22 @@ describe('InMemoryGarmentRepository', () => {
     it('allows clearing optional fields with null', async () => {
       const updated = await repository.update('g1', { notes: null })
       expect(updated.notes).toBeNull()
+    })
+
+    it('keeps the current photo when the changes leave it out', async () => {
+      const current = await repository.getById('g1')
+      const updated = await repository.update('g1', { notes: 'new' })
+      expect(updated.photoUrl).toBe(current!.photoUrl)
+    })
+
+    it('removes the photo with null', async () => {
+      const updated = await repository.update('g1', { photo: null })
+      expect(updated.photoUrl).toBeNull()
+    })
+
+    it('replaces the photo with a blob, stored as a data URL', async () => {
+      const updated = await repository.update('g1', { photo: photoBlob('new') })
+      expect(updated.photoUrl).toBe('data:image/jpeg;base64,bmV3')
     })
 
     it('rejects an unknown garment', async () => {

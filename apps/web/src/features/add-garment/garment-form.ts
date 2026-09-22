@@ -41,6 +41,14 @@ export interface GarmentFormOutput {
   notes: string | null
 }
 
+/**
+ * What the form hands to its page on save. `photo` is the picked file, `null` when there is no
+ * photo (removed, or never taken), and `undefined` when the initial photo is unchanged.
+ */
+export interface GarmentSubmission extends GarmentFormOutput {
+  photo?: Blob | null
+}
+
 export type GarmentFormResult =
   { ok: true; output: GarmentFormOutput } | { ok: false; errors: GarmentFormErrors }
 
@@ -64,7 +72,8 @@ const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/
 export function validateGarmentForm(values: GarmentFormValues, today: string): GarmentFormResult {
   const errors: GarmentFormErrors = {}
   const size = values.size.trim()
-  const amount = values.amount.trim()
+  // Comma-decimal keyboards (es-AR, es-UY) type 39,90; thousands separators are not accepted.
+  const amount = values.amount.trim().replace(',', '.')
   const notes = values.notes.trim()
 
   if (!values.category) errors.category = 'Choose a category'
@@ -77,7 +86,7 @@ export function validateGarmentForm(values: GarmentFormValues, today: string): G
   if (hasPurchase) {
     if (amount === '') {
       errors.amount = 'Enter the price'
-    } else if (amount.startsWith('-')) {
+    } else if (amount.startsWith('-') && PRICE_PATTERN.test(amount.slice(1))) {
       errors.amount = 'The price cannot be negative'
     } else if (!PRICE_PATTERN.test(amount)) {
       errors.amount = 'Enter a price with at most two decimals'

@@ -18,7 +18,8 @@ tokens declared as CSS custom properties in `apps/web/src/styles/tokens.css` (co
 spacing, radii, shadows). Dark mode is a `prefers-color-scheme` override of the color tokens.
 Base components live in `apps/web/src/components`, one folder per component with its module,
 and expose accessible markup (labels bound with `useId`, errors linked by `aria-describedby`).
-Feature components reference tokens only, never raw values.
+In feature components, colors, type sizes, spacing and radii come from tokens; component-specific
+layout dimensions (max widths, photo sizes, touch-target minimums) may be literal values.
 
 ## Alternatives considered
 

@@ -10,6 +10,21 @@ export const FILTER_PARAMS = {
   status: 'status',
 } as const
 
+/** The parameters that narrow the wardrobe. Status is not one of them: every listing has one. */
+export const CRITERION_PARAMS = [
+  FILTER_PARAMS.category,
+  FILTER_PARAMS.color,
+  FILTER_PARAMS.size,
+  FILTER_PARAMS.searchText,
+] as const
+
+/** A copy of the parameters without any criterion, keeping the status. */
+export function clearCriteria(params: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params)
+  for (const name of CRITERION_PARAMS) next.delete(name)
+  return next
+}
+
 export function parseWardrobeFilter(params: URLSearchParams): WardrobeFilter {
   const category = params.get(FILTER_PARAMS.category) ?? ''
   const color = params.get(FILTER_PARAMS.color) ?? ''

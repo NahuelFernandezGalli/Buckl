@@ -139,7 +139,7 @@ describeFeature(feature, ({ Background, Scenario, ScenarioOutline, AfterEachScen
   })
 
   Scenario('archived garments can be listed on request', ({ Given, When, Then }) => {
-    Given('the wardrobe also has an archived grey top', () => {
+    Given('an archived grey top is also on record', () => {
       repository = new InMemoryGarmentRepository(
         [
           ...baseGarments('oxford'),

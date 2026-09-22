@@ -19,7 +19,9 @@ and `IProductRepository` plus the use cases the API will expose (`create`, `upda
 `restore`). Implementations live in `apps/web/src/data`: `InMemoryGarmentRepository` in phase 3,
 an HTTP-backed repository in phase 6. `RepositoriesProvider` injects them at the root; pages get
 them with `useRepositories()` and load data through small hooks (`useWardrobe`, `useGarment`)
-that expose a discriminated state (`loading`, `ready`, `error`, `not-found`).
+that expose a discriminated state (`loading`, `ready`, `error`, `not-found`). Photos cross the
+port as a `Blob` and the implementation decides how to store them: a data URL in memory in phase 3,
+a presigned upload in phase 6.
 
 The in-memory repository enforces the domain rules the UI must react to (an archived garment is
 read-only, archiving twice fails) and raises typed errors with the same codes the domain uses, so

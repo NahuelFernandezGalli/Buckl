@@ -1,8 +1,8 @@
 import { Link, useNavigate, useParams } from 'react-router'
 import { usePageTitle } from '../../app/usePageTitle'
 import { useRepositories } from '../../app/useRepositories'
-import type { NewGarment } from '../../domain/garment-repository'
-import { fromGarment } from '../add-garment/garment-form'
+import type { GarmentChanges } from '../../domain/garment-repository'
+import { fromGarment, type GarmentSubmission } from '../add-garment/garment-form'
 import { GarmentForm } from '../add-garment/GarmentForm'
 import { GarmentNotFound } from '../garment-detail/GarmentNotFound'
 import { useGarment } from '../garment-detail/useGarment'
@@ -41,9 +41,10 @@ export function EditGarmentPage() {
     )
   }
 
-  const save = async (changes: NewGarment) => {
+  const save = async (submission: GarmentSubmission) => {
+    const changes: GarmentChanges = submission
     await garments.update(garment.id, changes)
-    navigate(`/wardrobe/${garment.id}`)
+    navigate(`/wardrobe/${garment.id}`, { replace: true })
   }
 
   return (
