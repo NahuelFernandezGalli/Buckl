@@ -23,6 +23,17 @@ or the application reference EF Core, Npgsql or ASP.NET Core.
 `Program.cs` is the only place that knows every layer. It calls `AddApplication()` and
 `AddInfrastructure()`, each defined in its own project, and maps the endpoints.
 
+## Persistence
+
+`Buckl.Infrastructure/Persistence` holds the EF Core context (`BucklDbContext`), one record per
+table under `Records/`, and one `IEntityTypeConfiguration` per record under `Configurations/`
+([ADR-0023](../adr/0023-persist-aggregates-through-persistence-records.md)). Records are plain
+rows; the domain aggregates never reach EF Core. Enumerations are stored as lower-case text
+through `EnumText`, which also generates the value lists of the check constraints.
+
+The connection string is `ConnectionStrings:Buckl` and always uses the application role
+(`buckl_app`). It is read the first time a context is built, so the API starts without it.
+
 ## Endpoints
 
 | Method and path | Authentication | Purpose                            |
