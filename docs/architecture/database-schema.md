@@ -51,11 +51,18 @@ Mermaid does not accept parentheses in attribute types, so `varchar_200` above m
 `varchar(200)` and `numeric_12_2` means `numeric(12,2)`. The statements below are the
 authoritative form.
 
+The migrations in `apps/api/src/Buckl.Infrastructure/Persistence/Migrations` are generated from the
+EF Core model and produce these statements. Primary and foreign keys are named by the naming
+convention (`pk_garments`, `fk_garments_users_user_id`); check constraints and indexes keep the
+names below, and the value lists of enumeration constraints are generated from the C# enums.
+
 ## Tables
 
 ### users
 
-Created in phase 5, by the first authenticated request. It holds only what links a token to rows.
+Created by the initial migration in phase 4. A row is added by the first authenticated request: a
+development subject in phase 4, the Auth0 `sub` claim from phase 5. It holds only what links a
+token to rows.
 
 ```sql
 create table users (
