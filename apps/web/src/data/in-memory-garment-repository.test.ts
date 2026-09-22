@@ -82,6 +82,20 @@ describe('InMemoryGarmentRepository', () => {
       expect(await search('nothing')).toEqual([])
     })
 
+    it("matches search text against the garment's category and color", async () => {
+      const repository = repositoryWith(
+        { classification: { category: 'top', color: 'blue', size: 'M' } },
+        { classification: { category: 'bottom', color: 'black', size: '32' } },
+      )
+      const search = (searchText: string) =>
+        repository
+          .list({ ...DEFAULT_WARDROBE_FILTER, searchText })
+          .then((gs) => gs.map((g) => g.id))
+      expect(await search('blue')).toEqual(['g1'])
+      expect(await search('top')).toEqual(['g1'])
+      expect(await search('bottom')).toEqual(['g2'])
+    })
+
     it('lists newest first', async () => {
       const repository = repositoryWith(
         { createdAt: '2026-09-01T00:00:00.000Z' },

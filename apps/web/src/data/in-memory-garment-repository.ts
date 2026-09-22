@@ -4,6 +4,7 @@ import {
   GarmentNotArchivedError,
   GarmentNotFoundError,
 } from '../domain/errors'
+import { CATEGORY_LABELS, COLOR_LABELS } from '../domain/classification'
 import type { Garment } from '../domain/garment'
 import type { GarmentChanges, GarmentRepository, NewGarment } from '../domain/garment-repository'
 import type { Product } from '../domain/product'
@@ -136,7 +137,14 @@ export class InMemoryGarmentRepository implements GarmentRepository {
     }
     if (filter.searchText) {
       const product = garment.productId ? this.products.get(garment.productId) : undefined
-      const haystack = [garment.notes, garment.classification.size, product?.name, product?.brand]
+      const haystack = [
+        CATEGORY_LABELS[garment.classification.category],
+        COLOR_LABELS[garment.classification.color],
+        garment.notes,
+        garment.classification.size,
+        product?.name,
+        product?.brand,
+      ]
         .filter((value): value is string => typeof value === 'string')
         .join(' ')
         .toLowerCase()
