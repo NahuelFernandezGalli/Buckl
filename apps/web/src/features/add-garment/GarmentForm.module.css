@@ -1,0 +1,23 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+}
+
+.fieldset {
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+.price {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-3);
+}
