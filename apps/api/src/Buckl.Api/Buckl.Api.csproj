@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- HTTP surface and composition root. The only project that references Infrastructure. -->
+  <ItemGroup>
+    <ProjectReference Include="../Buckl.Application/Buckl.Application.csproj" />
+    <ProjectReference Include="../Buckl.Infrastructure/Buckl.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
