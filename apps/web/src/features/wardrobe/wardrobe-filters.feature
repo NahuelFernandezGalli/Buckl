@@ -30,6 +30,15 @@ Feature: Wardrobe filters and search
     When the user searches the wardrobe for "oxford"
     Then only the blue top is listed
 
+  Scenario Outline: searching by a word matches the garment's color or category
+    When the user searches the wardrobe for "<text>"
+    Then only the <expected> is listed
+
+    Examples:
+      | text   | expected     |
+      | blue   | blue top     |
+      | bottom | black bottom |
+
   Scenario: filters live in the address so they survive a reload
     When the user opens the wardrobe at "/wardrobe?color=red"
     Then only the red dress is listed

@@ -20,8 +20,9 @@ public sealed record WardrobeFilter
 
     public Size? Size { get; init; }
 
-    /// <summary>Free text the repository matches against notes, size label and the linked
-    /// product's name and brand. Trimmed; blank means no text filter.</summary>
+    /// <summary>Free text the repository matches against the garment's category and color, its
+    /// notes, its size label, and the linked product's name and brand. Trimmed; blank means no
+    /// text filter.</summary>
     public string? SearchText
     {
         get => _searchText;

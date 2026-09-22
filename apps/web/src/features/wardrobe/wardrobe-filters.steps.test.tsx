@@ -102,6 +102,19 @@ describeFeature(feature, ({ Background, Scenario, ScenarioOutline, AfterEachScen
     Then('only the blue top is listed', () => expectOnlyListed('Blue top'))
   })
 
+  ScenarioOutline(
+    "searching by a word matches the garment's color or category",
+    ({ When, Then }, variables) => {
+      When('the user searches the wardrobe for "<text>"', async () => {
+        openWardrobe()
+        await user.type(await screen.findByLabelText('Search'), variables.text)
+      })
+      Then('only the <expected> is listed', async () => {
+        await expectOnlyListed(variables.expected)
+      })
+    },
+  )
+
   Scenario('filters live in the address so they survive a reload', ({ When, Then }) => {
     When('the user opens the wardrobe at {string}', (_ctx, route: string) => {
       openWardrobe(route)
