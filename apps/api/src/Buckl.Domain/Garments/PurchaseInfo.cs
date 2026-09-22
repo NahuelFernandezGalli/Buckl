@@ -30,6 +30,15 @@ public sealed record PurchaseInfo
         return new PurchaseInfo(price, date);
     }
 
+    /// <summary>Rebuilds purchase information that was validated when it was written. The
+    /// "not in the future" rule is a write-time rule, so it is not checked again.</summary>
+    public static PurchaseInfo Rehydrate(Money price, DateOnly date)
+    {
+        ArgumentNullException.ThrowIfNull(price);
+
+        return new PurchaseInfo(price, date);
+    }
+
     public static class Errors
     {
         public const string DateInFuture = "purchase_info.date_in_future";
