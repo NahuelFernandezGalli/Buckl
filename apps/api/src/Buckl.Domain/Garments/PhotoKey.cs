@@ -21,7 +21,9 @@ public sealed record PhotoKey
 
     public UserId OwnerId { get; }
 
-    public static string PrefixFor(UserId ownerId) => $"users/{ownerId.Value:D}/";
+    private const string UsersRoot = "users/";
+
+    public static string PrefixFor(UserId ownerId) => $"{UsersRoot}{ownerId.Value:D}/";
 
     public static PhotoKey Create(string value, UserId ownerId)
     {
@@ -49,6 +51,38 @@ public sealed record PhotoKey
         }
 
         return new PhotoKey(value, ownerId);
+    }
+
+    /// <summary>Rebuilds a stored key, reading its owner from the <c>users/&lt;userId&gt;/</c>
+    /// prefix. Used when loading garments; the database stores only the key.</summary>
+    public static PhotoKey Parse(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new DomainValidationException(Errors.Empty, "Photo key cannot be empty.");
+        }
+
+        return Create(value, OwnerFromPrefix(value));
+    }
+
+    private static UserId OwnerFromPrefix(string value)
+    {
+        var ownerEnd = value.StartsWith(UsersRoot, StringComparison.Ordinal)
+            ? value.IndexOf('/', UsersRoot.Length)
+            : -1;
+
+        if (ownerEnd < 0
+            || !Guid.TryParseExact(value.AsSpan(UsersRoot.Length, ownerEnd - UsersRoot.Length), "D", out var owner)
+            || owner == Guid.Empty)
+        {
+            throw new DomainValidationException(
+                Errors.OutsideOwnerPrefix,
+                $"Photo key must be under '{UsersRoot}<userId>/'.");
+        }
+
+        return new UserId(owner);
     }
 
     public static class Errors
