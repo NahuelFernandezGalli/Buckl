@@ -6,7 +6,7 @@ document are [ADR-0013](adr/0013-use-bdd-for-front-end-features.md) for testing 
 
 | Layer                          | Style                       | Tools                                        | Cycle                                   |
 | ------------------------------ | --------------------------- | -------------------------------------------- | --------------------------------------- |
-| Domain and application (.NET)  | Test-driven development     | xUnit                                        | red, green, refactor                    |
+| Domain and application (.NET)  | Test-driven development     | xUnit v3                                     | red, green, refactor                    |
 | Infrastructure adapters (.NET) | Integration tests           | xUnit, Postgres in a container, test doubles | written with the adapter                |
 | Front-end features             | Behavior-driven development | Gherkin, vitest-cucumber, Testing Library    | scenario, automate, implement, refactor |
 | Front-end helpers with no UI   | Unit tests                  | Vitest                                       | red, green, refactor                    |
@@ -34,6 +34,14 @@ Conventions:
 - Valid fixtures come from Object Mothers (`GarmentMother.Active()`), so a test shows only the
   data that matters to it.
 - No mocking framework in the domain: the domain has no dependencies to mock.
+
+Running the suite: from `apps/api`, `dotnet test` runs every test project on Microsoft Testing
+Platform ([ADR-0021](adr/0021-use-xunit-v3-on-microsoft-testing-platform.md)). Run it from that
+directory, because the SDK reads `apps/api/global.json` from the current directory. To run one
+class, use `dotnet test --filter-class Buckl.Domain.Tests.Garments.GarmentArchivingTests`.
+
+Tests pass `TestContext.Current.CancellationToken` to every call that accepts a cancellation
+token; the xUnit analyzers turn a missing token into a build error.
 
 ## The front-end cycle
 
