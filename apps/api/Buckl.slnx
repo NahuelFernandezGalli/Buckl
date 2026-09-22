@@ -6,6 +6,7 @@
     <Project Path="src/Buckl.Infrastructure/Buckl.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Buckl.Api.Tests/Buckl.Api.Tests.csproj" />
     <Project Path="tests/Buckl.Architecture.Tests/Buckl.Architecture.Tests.csproj" />
     <Project Path="tests/Buckl.Domain.Tests/Buckl.Domain.Tests.csproj" />
   </Folder>
