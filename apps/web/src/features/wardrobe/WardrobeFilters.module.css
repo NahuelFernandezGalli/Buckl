@@ -1,0 +1,29 @@
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-4);
+}
+
+.filters > :first-child {
+  grid-column: 1 / -1;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .filters {
+    grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+  }
+
+  .filters > :first-child {
+    grid-column: auto;
+  }
+}

@@ -105,6 +105,9 @@ API writes them as a side effect of imports. A product row carries no personal d
   [ADR-0015](../adr/0015-signal-domain-rule-violations-with-typed-exceptions.md). Codes are
   constants on the type that raises them (`Money.Errors.NegativeAmount`) and are listed under
   [error codes](#error-codes).
+- The web app keeps a TypeScript read model of these types in `apps/web/src/domain`
+  ([Web app](web-app.md)). It is maintained by hand until phase 6 derives it from the API's
+  OpenAPI document.
 
 ## Ports
 
@@ -144,36 +147,37 @@ and Row-Level Security policies, is in [Database schema](database-schema.md). `o
 Every code the domain can raise, so the API can map them to problem details without matching on
 message text. The table grows with each pull request that adds a rule.
 
-| Code                                   | Raised by                                 | Meaning                               |
-| -------------------------------------- | ----------------------------------------- | ------------------------------------- |
-| `money.negative_amount`                | `Money.Create`                            | Amount below zero                     |
-| `money.too_many_decimals`              | `Money.Create`                            | More than two decimal places          |
-| `money.amount_too_large`               | `Money.Create`                            | Above `numeric(12,2)` capacity        |
-| `money.invalid_currency`               | `Money.Create`                            | Not three ASCII letters               |
-| `purchase_info.date_in_future`         | `PurchaseInfo.Create`                     | Purchase date after today             |
-| `size.empty`                           | `Size.Create`                             | Blank size label                      |
-| `size.too_long`                        | `Size.Create`                             | Size label over 20 characters         |
-| `classification.unknown_category`      | `Classification.Create`                   | Category outside the enum             |
-| `classification.unknown_color`         | `Classification.Create`                   | Color outside the enum                |
-| `product_id.empty`                     | `ProductId` constructor                   | Empty GUID                            |
-| `product.name_empty`                   | `Product.Create`                          | Blank name                            |
-| `product.name_too_long`                | `Product.Create`                          | Name over 200 characters              |
-| `product.brand_too_long`               | `Product.Create`                          | Brand over 100 characters             |
-| `product.image_url_not_https`          | `Product.Create`                          | Image URL not absolute https          |
-| `product.source_url_invalid`           | `Product.Create`                          | Source URL not absolute http or https |
-| `product.unknown_source`               | `Product.Create`                          | Import source outside the enum        |
-| `user_id.empty`                        | `UserId` constructor                      | Empty GUID                            |
-| `garment_id.empty`                     | `GarmentId` constructor                   | Empty GUID                            |
-| `photo_key.empty`                      | `PhotoKey.Create`                         | Blank key                             |
-| `photo_key.too_long`                   | `PhotoKey.Create`                         | Key over 512 characters               |
-| `photo_key.outside_owner_prefix`       | `PhotoKey.Create`                         | Key not under `users/<ownerId>/`      |
-| `garment.unknown_source`               | `Garment.Create`                          | Import source outside the enum        |
-| `garment.photo_not_owned`              | `Garment.Create`                          | Photo belongs to another user         |
-| `garment.notes_too_long`               | `Garment.Create`                          | Notes over 500 characters             |
-| `garment.already_archived`             | `Garment.Archive`                         | Archiving an archived garment         |
-| `garment.not_archived`                 | `Garment.Restore`                         | Restoring an active garment           |
-| `garment.archived_read_only`           | `Garment.Update*`, `Garment.ReplacePhoto` | Editing an archived garment           |
-| `wardrobe_filter.search_text_too_long` | `WardrobeFilter.SearchText`               | Search text over 100 characters       |
+| Code                                   | Raised by                                                       | Meaning                                              |
+| -------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| `money.negative_amount`                | `Money.Create`                                                  | Amount below zero                                    |
+| `money.too_many_decimals`              | `Money.Create`                                                  | More than two decimal places                         |
+| `money.amount_too_large`               | `Money.Create`                                                  | Above `numeric(12,2)` capacity                       |
+| `money.invalid_currency`               | `Money.Create`                                                  | Not three ASCII letters                              |
+| `purchase_info.date_in_future`         | `PurchaseInfo.Create`                                           | Purchase date after today                            |
+| `size.empty`                           | `Size.Create`                                                   | Blank size label                                     |
+| `size.too_long`                        | `Size.Create`                                                   | Size label over 20 characters                        |
+| `classification.unknown_category`      | `Classification.Create`                                         | Category outside the enum                            |
+| `classification.unknown_color`         | `Classification.Create`                                         | Color outside the enum                               |
+| `product_id.empty`                     | `ProductId` constructor                                         | Empty GUID                                           |
+| `product.name_empty`                   | `Product.Create`                                                | Blank name                                           |
+| `product.name_too_long`                | `Product.Create`                                                | Name over 200 characters                             |
+| `product.brand_too_long`               | `Product.Create`                                                | Brand over 100 characters                            |
+| `product.image_url_not_https`          | `Product.Create`                                                | Image URL not absolute https                         |
+| `product.source_url_invalid`           | `Product.Create`                                                | Source URL not absolute http or https                |
+| `product.unknown_source`               | `Product.Create`                                                | Import source outside the enum                       |
+| `user_id.empty`                        | `UserId` constructor                                            | Empty GUID                                           |
+| `garment_id.empty`                     | `GarmentId` constructor                                         | Empty GUID                                           |
+| `photo_key.empty`                      | `PhotoKey.Create`                                               | Blank key                                            |
+| `photo_key.too_long`                   | `PhotoKey.Create`                                               | Key over 512 characters                              |
+| `photo_key.outside_owner_prefix`       | `PhotoKey.Create`                                               | Key not under `users/<ownerId>/`                     |
+| `garment.unknown_source`               | `Garment.Create`                                                | Import source outside the enum                       |
+| `garment.photo_not_owned`              | `Garment.Create`                                                | Photo belongs to another user                        |
+| `garment.notes_too_long`               | `Garment.Create`                                                | Notes over 500 characters                            |
+| `garment.already_archived`             | `Garment.Archive`                                               | Archiving an archived garment                        |
+| `garment.not_archived`                 | `Garment.Restore`                                               | Restoring an active garment                          |
+| `garment.archived_read_only`           | `Garment.Update*`, `Garment.ReplacePhoto`                       | Editing an archived garment                          |
+| `garment.not_found`                    | Web app `GarmentNotFoundError`; the API as a `404` from phase 4 | Garment does not exist or is not visible to the user |
+| `wardrobe_filter.search_text_too_long` | `WardrobeFilter.SearchText`                                     | Search text over 100 characters                      |
 
 ## Open questions
 
