@@ -4,8 +4,13 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Versions for every project. Buckl.Domain references none, by design. Kept up to date by Dependabot. -->
+    <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="TngTech.ArchUnitNET.xUnitV3" Version="0.13.4" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>
