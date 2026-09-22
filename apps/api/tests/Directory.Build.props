@@ -3,6 +3,8 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- xUnit v3 test projects are executables run by Microsoft.Testing.Platform (ADR-0021). -->
+    <OutputType>Exe</OutputType>
     <!-- CA1707: underscores in identifiers. Test names read better with them. -->
     <NoWarn>$(NoWarn);CA1707</NoWarn>
   </PropertyGroup>
