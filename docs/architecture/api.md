@@ -106,9 +106,34 @@ The health endpoint is not an MVC action, so it never opens a transaction.
 
 ## Endpoints
 
-| Method and path | Authentication | Purpose                            |
-| --------------- | -------------- | ---------------------------------- |
-| `GET /health`   | anonymous      | Liveness probe for hosts and tests |
+The contract mirrors the web app's repository ports (`apps/web/src/domain`), so phase 6 swaps the
+in-memory repository for HTTP without touching screens. JSON is camel case, enumerations are
+lower-case strings, dates are `YYYY-MM-DD`, and timestamps are ISO 8601 in UTC.
+
+| Method and path        | Purpose                                        | Success |
+| ---------------------- | ---------------------------------------------- | ------- |
+| `GET /health`          | Liveness probe (anonymous)                     | 200     |
+| `GET /garments`        | Wardrobe: `?category=&color=&size=&q=&status=` | 200     |
+| `GET /garments/{id}`   | One garment                                    | 200     |
+| `GET /products/{id}`   | One catalog product                            | 200     |
+| `GET /openapi/v1.json` | OpenAPI document (Development, anonymous)      | 200     |
+| `GET /scalar/v1`       | API reference UI (Development, anonymous)      | 200     |
+
+`photoUrl` is always `null` until phase 6 attaches photos. Lists are not paginated in v1.
+
+## Errors
+
+Every error is a problem details document (`application/problem+json`) with a `code` extension.
+
+| Status | When                                                             | `code`                                             |
+| ------ | ---------------------------------------------------------------- | -------------------------------------------------- |
+| 400    | Malformed request: missing field, unknown enum value             | `request.invalid`                                  |
+| 400    | Input a domain rule rejects                                      | the domain code, e.g. `money.negative_amount`      |
+| 401    | No or invalid identity                                           | `request.unauthenticated`                          |
+| 404    | Unknown route                                                    | `resource.not_found`                               |
+| 404    | Garment or product the caller cannot see                         | `garment.not_found`, `product.not_found`           |
+| 409    | A rule about the current state, e.g. editing an archived garment | the domain code, e.g. `garment.archived_read_only` |
+| 500    | Anything unexpected; no internal details are returned            | `server.error`                                     |
 
 ## Running locally
 
