@@ -57,13 +57,14 @@ sequenceDiagram
 3. One policy per table covers all commands:
 
    ```sql
-   CREATE POLICY garments_owner ON garments
-     USING (user_id = current_setting('app.user_id', true)::uuid)
-     WITH CHECK (user_id = current_setting('app.user_id', true)::uuid);
+   create policy garments_owner on garments
+       using      (user_id = nullif(current_setting('app.user_id', true), '')::uuid)
+       with check (user_id = nullif(current_setting('app.user_id', true), '')::uuid);
    ```
 
-   With `current_setting(..., true)` a missing variable yields `NULL`, so a request that forgot to
-   set it sees no rows instead of all rows.
+   With `current_setting(..., true)` a missing variable yields `NULL`, and `nullif` turns the empty
+   string a reused connection reports into `NULL` too, so a request that forgot to set it sees no
+   rows instead of all rows or an error.
 
 4. The API connects with a dedicated role (`buckl_app`) that owns no tables and has neither
    `BYPASSRLS` nor `SUPERUSER`. Migrations run with a separate role.
