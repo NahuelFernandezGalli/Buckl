@@ -163,9 +163,14 @@ alter table garments enable row level security;
 alter table garments force row level security;
 
 create policy garments_owner on garments
-    using      (user_id = current_setting('app.user_id', true)::uuid)
-    with check (user_id = current_setting('app.user_id', true)::uuid);
+    using      (user_id = nullif(current_setting('app.user_id', true), '')::uuid)
+    with check (user_id = nullif(current_setting('app.user_id', true), '')::uuid);
 ```
+
+`current_setting(..., true)` returns null when the variable was never set on the session, but an
+empty string after a transaction-local `set_config` has ended on it. `nullif` maps both to null,
+so a pooled connection that served another request sees no rows instead of failing on
+`''::uuid`. The migration `RowLevelSecurity` also refuses to run if `buckl_app` does not exist.
 
 `products` and `users` have no policy. How the API sets `app.user_id` on every request is in
 [Authentication and security](auth-and-security.md).
@@ -205,7 +210,7 @@ Passwords come from environment variables in phase 4 and are never written to th
 
 ## Later phases
 
-- Phase 4 adds `__EFMigrationsHistory`, owned by the migrator role, and turns this document into
-  the initial migration and the RLS migration.
+- Phase 4 turned this document into the `InitialSchema` and `RowLevelSecurity` migrations;
+  `__EFMigrationsHistory` is owned by the migrator role.
 - Phase 8 adds `outfits`, `outfit_garments` and `wear_logs`, each with a `user_id` column and the
   same policy shape.
