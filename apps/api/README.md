@@ -19,6 +19,29 @@ dotnet test
 
 One class: `dotnet test --filter-class Buckl.Infrastructure.Tests.Persistence.InitialSchemaTests`.
 
+## Running the API locally
+
+The API runs against the `dev` branch of the Neon project, as `buckl_app`. One-time setup: create
+the branch and the role, and migrate the branch, as described in "Database roles" and "Database
+migrations" below.
+
+Store the application role's connection string outside the repository, once:
+
+```bash
+dotnet user-secrets set "ConnectionStrings:Buckl" "Host=<ep-...>.neon.tech;Database=buckl;Username=buckl_app;Password=<...>;SSL Mode=Require" --project src/Buckl.Api
+```
+
+Then:
+
+```bash
+dotnet run --project src/Buckl.Api
+```
+
+The API listens on `http://localhost:5080`. Until phase 5 it runs only in the Development
+environment and identifies callers by the `X-Dev-User` header: any value is a user, so
+`dev|alice` and `dev|bob` are two users. `src/Buckl.Api/Buckl.Api.http` walks through the whole
+flow for both, and the API reference is at `http://localhost:5080/scalar/v1`.
+
 ## Database migrations
 
 Migrations live in `src/Buckl.Infrastructure/Persistence/Migrations`. The API never applies them;
