@@ -48,6 +48,12 @@ public class LayerDependencyTests
         AssertNoDependency(InfrastructureAssembly, ApiAssembly);
 
     [Fact]
+    public void Controllers_reach_the_database_only_through_handlers() =>
+        Types().That().ResideInNamespace("Buckl.Api.Controllers")
+            .Should().NotDependOnAny(Types().That().ResideInAssembly(InfrastructureAssembly))
+            .Check(BucklArchitecture);
+
+    [Fact]
     public void Domain_references_only_the_base_class_library()
     {
         var references = ReferencedAssemblyNames(DomainAssembly);
