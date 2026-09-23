@@ -189,6 +189,14 @@ message text. The table grows with each pull request that adds a rule.
 | `garment.not_found`                    | Web app `GarmentNotFoundError`; the API as a `404` from phase 4 | Garment does not exist or is not visible to the user |
 | `wardrobe_filter.search_text_too_long` | `WardrobeFilter.SearchText`                                     | Search text over 100 characters                      |
 
+The application layer adds two codes for resources the current user cannot see, whether they do
+not exist or Row-Level Security hides them. The API maps both to `404`.
+
+| Code                | Raised by                                | Meaning                       |
+| ------------------- | ---------------------------------------- | ----------------------------- |
+| `garment.not_found` | `GarmentNotFoundException` (application) | No such garment for this user |
+| `product.not_found` | `ProductNotFoundException` (application) | No such product               |
+
 ## Open questions
 
 - Product deduplication: when two imports resolve to the same `source_url`, reuse the product or

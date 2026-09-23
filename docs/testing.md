@@ -33,7 +33,9 @@ Conventions:
 - Time comes from `TestClock`, which holds fixed values, never from `DateTimeOffset.UtcNow`.
 - Valid fixtures come from Object Mothers (`GarmentMother.Active()`), so a test shows only the
   data that matters to it.
-- No mocking framework in the domain: the domain has no dependencies to mock.
+- No mocking framework. The domain has no dependencies to mock; application handlers are tested
+  against hand-written fakes in `Buckl.Application.Tests/Fakes` (an in-memory repository, a fixed
+  current user, a unit of work that counts saves), and time comes from `FixedTimeProvider`.
 
 Running the suite: from `apps/api`, `dotnet test` runs every test project on Microsoft Testing
 Platform ([ADR-0021](adr/0021-use-xunit-v3-on-microsoft-testing-platform.md)). Run it from that

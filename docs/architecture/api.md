@@ -23,6 +23,22 @@ or the application reference EF Core, Npgsql or ASP.NET Core.
 `Program.cs` is the only place that knows every layer. It calls `AddApplication()` and
 `AddInfrastructure()`, each defined in its own project, and maps the endpoints.
 
+## Use cases
+
+Each use case is one `sealed` handler class in `Buckl.Application`, grouped by aggregate
+(`Garments/`, `Products/`), with a single `HandleAsync` method. Handlers depend on domain ports and
+on application ports in `Abstractions/` (`ICurrentUser`, `IUnitOfWork`, `IUserTransactionFactory`,
+`IUserProvisioning`), never on EF Core or ASP.NET Core.
+
+| Handler               | Input            | Output   | Errors              |
+| --------------------- | ---------------- | -------- | ------------------- |
+| `ListWardrobeHandler` | `WardrobeFilter` | garments | —                   |
+| `GetGarmentHandler`   | `GarmentId`      | garment  | `garment.not_found` |
+| `GetProductHandler`   | `ProductId`      | product  | `product.not_found` |
+
+A garment that exists but belongs to someone else is reported exactly like one that does not
+exist.
+
 ## Persistence
 
 `Buckl.Infrastructure/Persistence` holds the EF Core context (`BucklDbContext`), one record per
