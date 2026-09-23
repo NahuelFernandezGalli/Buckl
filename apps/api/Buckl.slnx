@@ -9,5 +9,6 @@
     <Project Path="tests/Buckl.Api.Tests/Buckl.Api.Tests.csproj" />
     <Project Path="tests/Buckl.Architecture.Tests/Buckl.Architecture.Tests.csproj" />
     <Project Path="tests/Buckl.Domain.Tests/Buckl.Domain.Tests.csproj" />
+    <Project Path="tests/Buckl.Infrastructure.Tests/Buckl.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>
