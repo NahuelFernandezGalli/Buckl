@@ -27,8 +27,9 @@ sequenceDiagram
     W->>API: GET /garments with bearer access token
     API->>A: Fetch JWKS (cached)
     API->>API: Validate signature, issuer, audience, expiry
-    API->>DB: BEGIN, upsert users by auth0_subject
-    API->>DB: SET LOCAL app.user_id
+    API->>DB: Upsert users by auth0_subject
+    API->>DB: BEGIN
+    API->>DB: select set_config('app.user_id', ...)
     API->>DB: SELECT from garments
     DB-->>API: Only rows owned by that user
     API-->>W: 200 with garments
@@ -38,7 +39,8 @@ sequenceDiagram
 
 - Authority (issuer) and audience come from configuration, never hard-coded.
 - Every endpoint requires an authenticated user by default (`[Authorize]` as the fallback policy);
-  only the health endpoint is anonymous.
+  only the health endpoint is anonymous. In the Development environment, `/openapi/v1.json` and
+  `/scalar/v1` are anonymous too (see `apps/api/src/Buckl.Api/Program.cs`).
 - A missing or invalid token yields `401`. A valid token that targets another user's resource
   yields `404`, so the API never leaks the existence of other users' rows.
 - Tokens are validated against Auth0's JWKS, cached and refreshed on key rotation.

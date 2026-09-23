@@ -82,8 +82,9 @@ flowchart LR
   `PurchaseInfo`, `Category`, `Size`, `Color`) and repository interfaces live here.
 - `Buckl.Application` orchestrates use cases (`ListWardrobe`, `CreateGarment`, and the rest)
   against the domain and its ports.
-- `Buckl.Infrastructure` implements the ports: EF Core repositories, RLS session interceptor, R2
-  storage adapter.
+- `Buckl.Infrastructure` implements the ports: EF Core repositories, per-request user transaction
+  ([ADR-0025](../adr/0025-bind-each-request-to-one-user-scoped-transaction.md)), R2 storage
+  adapter.
 - `Buckl.Api` exposes MVC controllers, maps errors to problem details with a stable `code`, runs
   every action inside its user's transaction (a global action filter) and authenticates with a
   development scheme until Auth0 replaces it in phase 5. The details are in [API](api.md).
