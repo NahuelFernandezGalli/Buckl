@@ -182,11 +182,13 @@ public class GarmentsWriteEndpointsTests
             Http.Json("""{ "notes": "hijacked" }"""),
             Ct);
         using var archive = await bob.PostAsync(Http.Url($"/garments/{alicesGarment}/archive"), content: null, Ct);
+        using var restore = await bob.PostAsync(Http.Url($"/garments/{alicesGarment}/restore"), content: null, Ct);
         var bobsWardrobe = await ListAsync(bob, "");
 
         Assert.Equal(HttpStatusCode.NotFound, read.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, patch.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, archive.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, restore.StatusCode);
         Assert.Equal(0, bobsWardrobe.GetArrayLength());
         Assert.Equal("Oxford shirt", await _api.Database.ReadGarmentNotesAsync(new GarmentId(alicesGarment), Ct));
         Assert.Equal(1, (await ListAsync(alice, "")).GetArrayLength());

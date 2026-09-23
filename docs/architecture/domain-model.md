@@ -101,7 +101,6 @@ API writes them as a side effect of imports. A product row carries no personal d
   with a private constructor, a static `Create` factory for new instances and a static `Rehydrate`
   factory that persistence adapters use to rebuild stored ones; identity is the id, and no custom
   equality is defined.
-
 - `Rehydrate` takes a snapshot record (`GarmentSnapshot`, `ProductSnapshot`), re-checks the
   invariants that tie fields together and skips creation and transition rules: a stored garment
   may already be archived, and a stored purchase date is not compared with today again

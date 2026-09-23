@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Buckl.Infrastructure.Persistence;
 
 /// <summary>Upserts <c>users</c> by subject. <c>on conflict do nothing</c> makes concurrent first
-/// requests safe, and needs only the insert privilege the application role has.</summary>
+/// requests safe; the application role has both the insert privilege for the upsert and the
+/// select privilege the follow-up read needs.</summary>
 public sealed class EfUserProvisioning : IUserProvisioning
 {
     private readonly BucklDbContext _context;
