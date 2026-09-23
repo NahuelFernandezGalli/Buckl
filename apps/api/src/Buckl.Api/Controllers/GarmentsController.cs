@@ -30,4 +30,44 @@ public sealed class GarmentsController : ControllerBase
         [FromServices] GetGarmentHandler handler,
         CancellationToken cancellationToken) =>
         GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken));
+
+    [HttpPost]
+    public async Task<ActionResult<GarmentResponse>> Create(
+        CreateGarmentRequest request,
+        [FromServices] CreateGarmentHandler handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var garment = await handler.HandleAsync(request.ToCommand(), cancellationToken);
+
+        return CreatedAtAction(nameof(Get), new { id = garment.Id.Value }, GarmentResponse.From(garment));
+    }
+
+    [HttpPatch("{id:guid}")]
+    public async Task<GarmentResponse> Update(
+        Guid id,
+        UpdateGarmentRequest request,
+        [FromServices] UpdateGarmentHandler handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return GarmentResponse.From(
+            await handler.HandleAsync(request.ToCommand(new GarmentId(id)), cancellationToken));
+    }
+
+    [HttpPost("{id:guid}/archive")]
+    public async Task<GarmentResponse> Archive(
+        Guid id,
+        [FromServices] ArchiveGarmentHandler handler,
+        CancellationToken cancellationToken) =>
+        GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken));
+
+    [HttpPost("{id:guid}/restore")]
+    public async Task<GarmentResponse> Restore(
+        Guid id,
+        [FromServices] RestoreGarmentHandler handler,
+        CancellationToken cancellationToken) =>
+        GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken));
 }
