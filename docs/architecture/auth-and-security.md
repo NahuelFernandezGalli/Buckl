@@ -42,6 +42,9 @@ sequenceDiagram
 - A missing or invalid token yields `401`. A valid token that targets another user's resource
   yields `404`, so the API never leaks the existence of other users' rows.
 - Tokens are validated against Auth0's JWKS, cached and refreshed on key rotation.
+- Until phase 5 the API uses a development-only scheme instead: the `X-Dev-User` header names the
+  subject ([ADR-0026](../adr/0026-authenticate-with-a-development-scheme-until-auth0.md)). It is
+  registered only in the Development environment, and the API does not start anywhere else.
 
 ### Local user record
 
