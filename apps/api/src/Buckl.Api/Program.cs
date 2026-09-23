@@ -1,18 +1,21 @@
-using Buckl.Api;
+using Buckl.Api.Authentication;
 using Buckl.Application;
 using Buckl.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
-builder.Services.AddScoped<Buckl.Application.Abstractions.ICurrentUser, StubCurrentUser>();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddBucklAuthentication(builder.Environment);
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-app.MapHealthChecks("/health");
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 
 app.Run();
