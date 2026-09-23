@@ -13,7 +13,8 @@ Everything about the design, the decisions and the vocabulary lives in [`docs/`]
 ## Repository layout
 
 - `apps/web` — React + Vite + TypeScript front end (PWA).
-- `apps/api` — .NET solution: domain and its tests (phase 2); the remaining layers arrive in phase 4.
+- `apps/api` — .NET 10 solution: domain, application, infrastructure and API projects, with one
+  test project per layer.
 - `docs` — architecture, ADRs, glossary, privacy.
 
 ## Development
