@@ -39,3 +39,4 @@ one and update the old one's status.
 | [0022](0022-layer-the-api-with-controllers-and-use-case-handlers.md) | Layer the API with controllers and one handler per use case             | Accepted                                                     | 2026-09-22 |
 | [0023](0023-persist-aggregates-through-persistence-records.md)       | Persist aggregates through dedicated persistence records                | Accepted                                                     | 2026-09-22 |
 | [0024](0024-apply-migrations-explicitly-with-the-owner-role.md)      | Apply migrations explicitly with the owner role                         | Accepted                                                     | 2026-09-22 |
+| [0025](0025-bind-each-request-to-one-user-scoped-transaction.md)     | Bind each request to one user-scoped transaction                        | Accepted                                                     | 2026-09-22 |

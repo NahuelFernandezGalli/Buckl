@@ -34,6 +34,15 @@ through `EnumText`, which also generates the value lists of the check constraint
 The connection string is `ConnectionStrings:Buckl` and always uses the application role
 (`buckl_app`). It is read the first time a context is built, so the API starts without it.
 
+### Row-Level Security binding
+
+`EfUserTransactionFactory` opens the request's transaction and runs
+`select set_config('app.user_id', @userId, true)`, so the policies see that user until the
+transaction ends ([ADR-0025](../adr/0025-bind-each-request-to-one-user-scoped-transaction.md)).
+Handlers persist through `IUnitOfWork.SaveChangesAsync`, which writes inside that transaction;
+they never commit. The integration tests prove that a committed user does not leak into the next
+use of a pooled connection.
+
 ## Endpoints
 
 | Method and path | Authentication | Purpose                            |
