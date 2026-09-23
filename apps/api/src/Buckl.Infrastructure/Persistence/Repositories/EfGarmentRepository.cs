@@ -92,16 +92,17 @@ public sealed class EfGarmentRepository : IGarmentRepository
         {
             var pattern = LikePattern.Contains(searchText);
             query = query.Where(garment =>
-                EF.Functions.ILike(garment.Category, pattern, LikePattern.EscapeCharacter)
-                || EF.Functions.ILike(garment.Color, pattern, LikePattern.EscapeCharacter)
-                || (garment.Notes != null
-                    && EF.Functions.ILike(garment.Notes, pattern, LikePattern.EscapeCharacter))
-                || (garment.Size != null
-                    && EF.Functions.ILike(garment.Size, pattern, LikePattern.EscapeCharacter))
-                || (garment.Product != null
-                    && (EF.Functions.ILike(garment.Product.Name, pattern, LikePattern.EscapeCharacter)
-                        || (garment.Product.Brand != null
-                            && EF.Functions.ILike(garment.Product.Brand, pattern, LikePattern.EscapeCharacter)))));
+                EF.Functions.ILike(
+                    garment.Category
+                        + " " + garment.Color
+                        + (garment.Notes != null ? " " + garment.Notes : "")
+                        + (garment.Size != null ? " " + garment.Size : "")
+                        + (garment.Product != null ? " " + garment.Product.Name : "")
+                        + (garment.Product != null && garment.Product.Brand != null
+                            ? " " + garment.Product.Brand
+                            : ""),
+                    pattern,
+                    LikePattern.EscapeCharacter));
         }
 
         return query;
