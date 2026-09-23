@@ -38,3 +38,4 @@ one and update the old one's status.
 | [0021](0021-use-xunit-v3-on-microsoft-testing-platform.md)           | Use xUnit v3 on Microsoft Testing Platform                              | Accepted                                                     | 2026-09-22 |
 | [0022](0022-layer-the-api-with-controllers-and-use-case-handlers.md) | Layer the API with controllers and one handler per use case             | Accepted                                                     | 2026-09-22 |
 | [0023](0023-persist-aggregates-through-persistence-records.md)       | Persist aggregates through dedicated persistence records                | Accepted                                                     | 2026-09-22 |
+| [0024](0024-apply-migrations-explicitly-with-the-owner-role.md)      | Apply migrations explicitly with the owner role                         | Accepted                                                     | 2026-09-22 |

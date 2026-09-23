@@ -21,6 +21,9 @@ Everything about the design, the decisions and the vocabulary lives in [`docs/`]
 
 Requires Node 22 or newer and the .NET 10 SDK, pinned by `apps/api/global.json`.
 
+API tests need Docker running, because they start Postgres in a container. Everything about the
+API, from tests to migrations, is in [`apps/api/README.md`](apps/api/README.md).
+
 Web:
 
 ```bash
