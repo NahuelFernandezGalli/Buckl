@@ -1,3 +1,4 @@
+using Buckl.Application.Abstractions;
 using Buckl.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,9 @@ public static class DependencyInjection
         // health endpoint and tests that never touch the database need no configuration.
         services.AddDbContext<BucklDbContext>(options =>
             BucklDbContextOptions.Configure(options, ReadConnectionString(configuration)));
+
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IUserTransactionFactory, EfUserTransactionFactory>();
 
         return services;
     }
