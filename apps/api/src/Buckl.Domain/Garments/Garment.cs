@@ -19,7 +19,10 @@ public sealed class Garment
         PurchaseInfo? purchaseInfo,
         ProductId? productId,
         string? notes,
-        DateTimeOffset createdAt)
+        GarmentStatus status,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt,
+        DateTimeOffset? archivedAt)
     {
         Id = id;
         OwnerId = ownerId;
@@ -29,9 +32,10 @@ public sealed class Garment
         PurchaseInfo = purchaseInfo;
         ProductId = productId;
         Notes = notes;
-        Status = GarmentStatus.Active;
+        Status = status;
         CreatedAt = createdAt;
-        UpdatedAt = createdAt;
+        UpdatedAt = updatedAt;
+        ArchivedAt = archivedAt;
     }
 
     public GarmentId Id { get; }
@@ -82,14 +86,11 @@ public sealed class Garment
     {
         ArgumentNullException.ThrowIfNull(classification);
 
-        if (!Enum.IsDefined(source))
-        {
-            throw new DomainValidationException(
-                Errors.UnknownSource,
-                $"Unknown import source '{source}'.");
-        }
+        EnsureKnown(source);
 
         EnsureOwnedBy(photoKey, ownerId);
+
+        var createdAt = now.ToUniversalTime();
 
         return new Garment(
             GarmentId.New(),
@@ -100,7 +101,59 @@ public sealed class Garment
             purchaseInfo,
             productId,
             NormalizeNotes(notes),
-            now.ToUniversalTime());
+            GarmentStatus.Active,
+            createdAt,
+            createdAt,
+            archivedAt: null);
+    }
+
+    /// <summary>Rebuilds a garment that was created earlier and stored. Only persistence adapters
+    /// call it. It re-checks the invariants that tie fields together (owner of the photo, archive
+    /// time matching the status, notes length, update not before creation) but applies no creation
+    /// or transition rule, because a stored garment may already be archived.</summary>
+    public static Garment Rehydrate(GarmentSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(snapshot.Classification);
+
+        EnsureKnown(snapshot.Source);
+
+        if (!Enum.IsDefined(snapshot.Status))
+        {
+            throw new DomainValidationException(
+                Errors.UnknownStatus,
+                $"Unknown garment status '{snapshot.Status}'.");
+        }
+
+        EnsureOwnedBy(snapshot.PhotoKey, snapshot.OwnerId);
+
+        if ((snapshot.Status == GarmentStatus.Archived) != snapshot.ArchivedAt.HasValue)
+        {
+            throw new DomainValidationException(
+                Errors.InconsistentArchiveState,
+                "An archived garment needs an archive time, and an active one cannot have one.");
+        }
+
+        if (snapshot.UpdatedAt < snapshot.CreatedAt)
+        {
+            throw new DomainValidationException(
+                Errors.UpdatedBeforeCreated,
+                "A garment cannot be updated before it was created.");
+        }
+
+        return new Garment(
+            snapshot.Id,
+            snapshot.OwnerId,
+            snapshot.Classification,
+            snapshot.Source,
+            snapshot.PhotoKey,
+            snapshot.PurchaseInfo,
+            snapshot.ProductId,
+            NormalizeNotes(snapshot.Notes),
+            snapshot.Status,
+            snapshot.CreatedAt.ToUniversalTime(),
+            snapshot.UpdatedAt.ToUniversalTime(),
+            snapshot.ArchivedAt?.ToUniversalTime());
     }
 
     /// <summary>Replaces category, color and size label.</summary>
@@ -190,6 +243,16 @@ public sealed class Garment
         }
     }
 
+    private static void EnsureKnown(ImportSource source)
+    {
+        if (!Enum.IsDefined(source))
+        {
+            throw new DomainValidationException(
+                Errors.UnknownSource,
+                $"Unknown import source '{source}'.");
+        }
+    }
+
     private static void EnsureOwnedBy(PhotoKey? photoKey, UserId ownerId)
     {
         if (photoKey is not null && photoKey.OwnerId != ownerId)
@@ -224,5 +287,8 @@ public sealed class Garment
         public const string UnknownSource = "garment.unknown_source";
         public const string PhotoNotOwned = "garment.photo_not_owned";
         public const string NotesTooLong = "garment.notes_too_long";
+        public const string UnknownStatus = "garment.unknown_status";
+        public const string InconsistentArchiveState = "garment.inconsistent_archive_state";
+        public const string UpdatedBeforeCreated = "garment.updated_before_created";
     }
 }

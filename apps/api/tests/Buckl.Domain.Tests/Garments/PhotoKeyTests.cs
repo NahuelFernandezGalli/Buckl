@@ -86,4 +86,40 @@ public class PhotoKeyTests
 
         Assert.Equal(PhotoKey.Create(value, Owner), PhotoKey.Create(value, Owner));
     }
+
+    [Fact]
+    public void Parse_derives_the_owner_from_the_key_prefix()
+    {
+        var owner = UserId.New();
+        var value = $"users/{owner.Value:D}/garments/shirt.jpg";
+
+        var key = PhotoKey.Parse(value);
+
+        Assert.Equal(value, key.Value);
+        Assert.Equal(owner, key.OwnerId);
+    }
+
+    [Theory]
+    [InlineData("photos/shirt.jpg")]
+    [InlineData("users/not-a-guid/shirt.jpg")]
+    [InlineData("users/00000000-0000-0000-0000-000000000000/shirt.jpg")]
+    [InlineData("users/aaaaaaaa-0000-0000-0000-000000000001")]
+    [InlineData("users/aaaaaaaa-0000-0000-0000-000000000001/")]
+    [InlineData("users/AAAAAAAA-0000-0000-0000-000000000001/shirt.jpg")]
+    public void Parse_rejects_a_key_outside_a_valid_owner_prefix(string value)
+    {
+        var exception = Assert.Throws<DomainValidationException>(() => PhotoKey.Parse(value));
+
+        Assert.Equal(PhotoKey.Errors.OutsideOwnerPrefix, exception.Code);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Parse_rejects_a_blank_key(string value)
+    {
+        var exception = Assert.Throws<DomainValidationException>(() => PhotoKey.Parse(value));
+
+        Assert.Equal(PhotoKey.Errors.Empty, exception.Code);
+    }
 }
