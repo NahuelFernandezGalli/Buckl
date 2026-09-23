@@ -36,6 +36,12 @@ Reading goes through the domain's `Rehydrate` factories, so a row that breaks an
 loudly instead of producing an invalid aggregate. Repositories under `Repositories/` implement the
 domain ports; they stage changes and never call `SaveChanges` themselves.
 
+`EfGarmentRepository` filters exactly like the web app's in-memory repository, so replacing it in
+phase 6 changes no result: category and color by equality, size by case-insensitive equality, and
+free text as a case-insensitive substring of the category, the color, the notes, the size label,
+or the linked product's name or brand, with `%`, `_` and `\` matched literally. Garments are
+ordered newest first.
+
 The connection string is `ConnectionStrings:Buckl` and always uses the application role
 (`buckl_app`). It is read the first time a context is built, so the API starts without it.
 
