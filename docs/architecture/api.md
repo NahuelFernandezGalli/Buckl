@@ -31,6 +31,11 @@ table under `Records/`, and one `IEntityTypeConfiguration` per record under `Con
 rows; the domain aggregates never reach EF Core. Enumerations are stored as lower-case text
 through `EnumText`, which also generates the value lists of the check constraints.
 
+`Mapping/GarmentMapper` and `Mapping/ProductMapper` convert between aggregates and records.
+Reading goes through the domain's `Rehydrate` factories, so a row that breaks an invariant fails
+loudly instead of producing an invalid aggregate. Repositories under `Repositories/` implement the
+domain ports; they stage changes and never call `SaveChanges` themselves.
+
 The connection string is `ConnectionStrings:Buckl` and always uses the application role
 (`buckl_app`). It is read the first time a context is built, so the API starts without it.
 
