@@ -1,4 +1,5 @@
 using Buckl.Application.Abstractions;
+using Buckl.Domain.Garments;
 using Buckl.Domain.Products;
 using Buckl.Infrastructure.Persistence;
 using Buckl.Infrastructure.Persistence.Repositories;
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IUserTransactionFactory, EfUserTransactionFactory>();
         services.AddScoped<IProductRepository, EfProductRepository>();
+        services.AddScoped<IGarmentRepository, EfGarmentRepository>();
 
         return services;
     }
