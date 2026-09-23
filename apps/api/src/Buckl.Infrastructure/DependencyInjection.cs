@@ -5,6 +5,7 @@ using Buckl.Infrastructure.Persistence;
 using Buckl.Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Buckl.Infrastructure;
 
@@ -24,10 +25,12 @@ public static class DependencyInjection
         services.AddDbContext<BucklDbContext>(options =>
             BucklDbContextOptions.Configure(options, ReadConnectionString(configuration)));
 
+        services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IUserTransactionFactory, EfUserTransactionFactory>();
         services.AddScoped<IProductRepository, EfProductRepository>();
         services.AddScoped<IGarmentRepository, EfGarmentRepository>();
+        services.AddScoped<IUserProvisioning, EfUserProvisioning>();
 
         return services;
     }
