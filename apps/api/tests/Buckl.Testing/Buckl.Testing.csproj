@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Shared helpers for the test projects: the Postgres container, seed data and domain
+       builders. A library, not a test project. -->
+  <PropertyGroup>
+    <IsTestProject>false</IsTestProject>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="xunit.v3.extensibility.core" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Buckl.Infrastructure/Buckl.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -72,3 +72,7 @@ csharp_indent_case_contents = true
 csharp_indent_switch_labels = true
 csharp_space_after_keywords_in_control_flow_statements = true
 csharp_preserve_single_line_statements = false
+
+# EF Core generates migrations. They are reviewed for their SQL, not for their style.
+[**/Migrations/*.cs]
+generated_code = true
