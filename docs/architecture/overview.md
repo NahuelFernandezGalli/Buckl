@@ -84,7 +84,9 @@ flowchart LR
   against the domain and its ports.
 - `Buckl.Infrastructure` implements the ports: EF Core repositories, RLS session interceptor, R2
   storage adapter.
-- `Buckl.Api` exposes HTTP endpoints, validates tokens and maps errors to ProblemDetails.
+- `Buckl.Api` exposes MVC controllers, maps errors to problem details with a stable `code`, runs
+  every action inside its user's transaction (a global action filter) and authenticates with a
+  development scheme until Auth0 replaces it in phase 5. The details are in [API](api.md).
 - Architecture tests (phase 4) fail the build if a layer references one it must not.
 
 ## Repository layout
@@ -105,8 +107,8 @@ Loading the wardrobe, once every phase is in place:
 1. The user opens the app; the PWA shell loads from the static host.
 2. If there is no session, the web app redirects to Auth0 and receives an access token.
 3. The web app calls `GET /garments` with `Authorization: Bearer <token>`.
-4. The API validates the token, upserts the local `User`, opens a transaction and executes
-   `SET LOCAL app.user_id = '<user id>'`.
+4. The API validates the token, maps its subject to the local user (creating it on the first
+   request), opens a transaction and executes `set_config('app.user_id', '<user id>', true)`.
 5. EF Core queries `garments`; RLS policies filter rows to that user.
 6. For each garment with a photo, the API returns a short-lived signed read URL for R2.
 7. The web app renders the grid; photos load directly from R2.
