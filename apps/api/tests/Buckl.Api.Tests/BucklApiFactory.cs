@@ -1,6 +1,9 @@
 using Buckl.Api.Authentication;
 using Buckl.Application.Abstractions;
+using Buckl.Domain.Garments;
+using Buckl.Domain.Products;
 using Buckl.Domain.Users;
+using Buckl.Infrastructure.Persistence.Repositories;
 using Buckl.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -39,6 +42,29 @@ public sealed class BucklApiFactory : WebApplicationFactory<Program>, IAsyncLife
         return await scope.ServiceProvider
             .GetRequiredService<IUserProvisioning>()
             .EnsureUserAsync(subject, cancellationToken);
+    }
+
+    public async Task SeedAsync(UserId owner, IEnumerable<Garment> garments, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(garments);
+
+        await using var scope = await UserScope.BeginAsync(Database, owner, cancellationToken);
+        var repository = new EfGarmentRepository(scope.Context);
+
+        foreach (var garment in garments)
+        {
+            await repository.AddAsync(garment, cancellationToken);
+        }
+
+        await scope.SaveAndCommitAsync(cancellationToken);
+    }
+
+    public async Task SeedProductAsync(Product product, CancellationToken cancellationToken)
+    {
+        var anyUser = await Database.InsertUserAsync(cancellationToken);
+        await using var scope = await UserScope.BeginAsync(Database, anyUser, cancellationToken);
+        await new EfProductRepository(scope.Context).AddAsync(product, cancellationToken);
+        await scope.SaveAndCommitAsync(cancellationToken);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
