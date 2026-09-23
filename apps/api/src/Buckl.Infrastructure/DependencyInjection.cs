@@ -1,5 +1,7 @@
 using Buckl.Application.Abstractions;
+using Buckl.Domain.Products;
 using Buckl.Infrastructure.Persistence;
+using Buckl.Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,6 +25,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IUserTransactionFactory, EfUserTransactionFactory>();
+        services.AddScoped<IProductRepository, EfProductRepository>();
 
         return services;
     }
