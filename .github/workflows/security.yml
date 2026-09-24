@@ -12,6 +12,28 @@ permissions:
   pull-requests: read
 
 jobs:
+  changes:
+    name: Detect changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      deps: ${{ steps.filter.outputs.deps }}
+    steps:
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            deps:
+              - '.github/workflows/security.yml'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'apps/web/package.json'
+              - 'apps/api/global.json'
+              - 'apps/api/dotnet-tools.json'
+              - 'apps/api/Directory.Packages.props'
+              - 'apps/api/Directory.Build.props'
+              - 'apps/api/**/*.csproj'
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
@@ -23,8 +45,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Dependency audit is a required check, so it is skipped rather than left out. It runs on every
+  # push and weekly schedule, and on a pull request whenever a manifest changes or the change
+  # detection did not succeed. New advisories against unchanged manifests surface on the schedule.
   deps:
     name: Dependency audit
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.deps == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
