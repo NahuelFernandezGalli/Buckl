@@ -4,4 +4,8 @@
     <ProjectReference Include="../Buckl.Application/Buckl.Application.csproj" />
     <ProjectReference Include="../Buckl.Infrastructure/Buckl.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
 </Project>
