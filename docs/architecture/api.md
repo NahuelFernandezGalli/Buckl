@@ -30,14 +30,25 @@ Each use case is one `sealed` handler class in `Buckl.Application`, grouped by a
 on application ports in `Abstractions/` (`ICurrentUser`, `IUnitOfWork`, `IUserTransactionFactory`,
 `IUserProvisioning`), never on EF Core or ASP.NET Core.
 
-| Handler               | Input            | Output   | Errors              |
-| --------------------- | ---------------- | -------- | ------------------- |
-| `ListWardrobeHandler` | `WardrobeFilter` | garments | —                   |
-| `GetGarmentHandler`   | `GarmentId`      | garment  | `garment.not_found` |
-| `GetProductHandler`   | `ProductId`      | product  | `product.not_found` |
+| Handler                 | Input                            | Output   | Errors                                                                           |
+| ----------------------- | -------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| `ListWardrobeHandler`   | `WardrobeFilter`                 | garments | —                                                                                |
+| `GetGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`                                                              |
+| `GetProductHandler`     | `ProductId`                      | product  | `product.not_found`                                                              |
+| `CreateGarmentHandler`  | `CreateGarmentCommand`           | garment  | validation codes of `Classification`, `Size`, `Money`, `PurchaseInfo`, `Garment` |
+| `UpdateGarmentHandler`  | `UpdateGarmentCommand` (partial) | garment  | `garment.not_found`, `garment.archived_read_only`, validation codes              |
+| `ArchiveGarmentHandler` | `GarmentId`                      | garment  | `garment.not_found`, `garment.already_archived`                                  |
+| `RestoreGarmentHandler` | `GarmentId`                      | garment  | `garment.not_found`, `garment.not_archived`                                      |
 
 A garment that exists but belongs to someone else is reported exactly like one that does not
 exist.
+
+Commands save once, through `IUnitOfWork`, after the domain accepted every change. A partial edit
+uses `FieldUpdate<T>`: an unset field is left alone, a set field (even to `null`) is applied.
+Time comes from an injected `TimeProvider`; "today", for the rule that a purchase cannot be in the
+future, is the UTC date of the request. That never affects users west of UTC (the expected
+audience); a user far east of UTC may be unable to record a same-day purchase for a few hours after
+local midnight. Taking the user's time zone into account is left for when it matters.
 
 ## Persistence
 

@@ -18,6 +18,8 @@ public static class DependencyInjection
         services.AddScoped<GetProductHandler>();
         services.AddScoped<CreateGarmentHandler>();
         services.AddScoped<UpdateGarmentHandler>();
+        services.AddScoped<ArchiveGarmentHandler>();
+        services.AddScoped<RestoreGarmentHandler>();
 
         return services;
     }
