@@ -146,6 +146,46 @@ public class GarmentRepositoryTests
     }
 
     [Fact]
+    public async Task Search_matches_a_query_spanning_category_and_color()
+    {
+        var alice = await _database.InsertUserAsync(Ct);
+        var blueTop = TestGarments.Active(alice, Category.Top, Color.Blue, size: null);
+        var blackBottom = TestGarments.Active(alice, Category.Bottom, Color.Black, size: null);
+        await StoreAsync(alice, blueTop, blackBottom);
+
+        var wardrobe = await ListAsync(alice, new WardrobeFilter { SearchText = "top blue" });
+
+        Assert.Equal(blueTop.Id, Assert.Single(wardrobe).Id);
+    }
+
+    [Fact]
+    public async Task Search_does_not_match_the_reversed_order_of_category_and_color()
+    {
+        var alice = await _database.InsertUserAsync(Ct);
+        var blueTop = TestGarments.Active(alice, Category.Top, Color.Blue, size: null);
+        await StoreAsync(alice, blueTop);
+
+        var wardrobe = await ListAsync(alice, new WardrobeFilter { SearchText = "blue top" });
+
+        Assert.Empty(wardrobe);
+    }
+
+    [Fact]
+    public async Task Search_matches_a_query_spanning_color_and_notes()
+    {
+        var alice = await _database.InsertUserAsync(Ct);
+        var blueGarment = TestGarments.Active(
+            alice, Category.Top, Color.Blue, size: null, notes: "For the wedding");
+        var redGarment = TestGarments.Active(
+            alice, Category.Top, Color.Red, size: null, notes: "For the wedding");
+        await StoreAsync(alice, blueGarment, redGarment);
+
+        var wardrobe = await ListAsync(alice, new WardrobeFilter { SearchText = "blue for the" });
+
+        Assert.Equal(blueGarment.Id, Assert.Single(wardrobe).Id);
+    }
+
+    [Fact]
     public async Task Search_treats_wildcards_as_literal_text()
     {
         var alice = await _database.InsertUserAsync(Ct);

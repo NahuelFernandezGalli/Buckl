@@ -65,9 +65,10 @@ domain ports; they stage changes and never call `SaveChanges` themselves.
 
 `EfGarmentRepository` filters exactly like the web app's in-memory repository, so replacing it in
 phase 6 changes no result: category and color by equality, size by case-insensitive equality, and
-free text as a case-insensitive substring of the category, the color, the notes, the size label,
-or the linked product's name or brand, with `%`, `_` and `\` matched literally. Garments are
-ordered newest first.
+free text as a case-insensitive substring of one haystack joining the category, the color, the
+notes, the size label, and the linked product's name and brand, in that order, skipping missing
+values and joined with single spaces (matching the web app's `haystack`), with `%`, `_` and `\`
+matched literally. Garments are ordered newest first.
 
 The connection string is `ConnectionStrings:Buckl` and always uses the application role
 (`buckl_app`). It is read the first time a context is built, so the API starts without it.
