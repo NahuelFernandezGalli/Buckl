@@ -48,8 +48,9 @@ sequenceDiagram
 
 ### Local user record
 
-- On the first authenticated request the API upserts a row in `users` keyed by the token's `sub`
-  claim. The generated `users.id` (UUID) is what the rest of the system uses as `UserId`.
+- On every authenticated request the API upserts a row in `users` keyed by the token's `sub`
+  claim (a development subject in phase 4) and binds the resulting local id to the request. The
+  generated `users.id` (UUID) is what the rest of the system uses as `UserId`.
 - The API stores nothing else from the token in v1. Display name and email stay in Auth0.
 
 ## Data isolation with Row-Level Security
@@ -71,9 +72,11 @@ sequenceDiagram
 
 4. The API connects with a dedicated role (`buckl_app`) that owns no tables and has neither
    `BYPASSRLS` nor `SUPERUSER`. Migrations run with a separate role.
-5. Per request, inside one transaction, the API executes `SET LOCAL app.user_id = '<uuid>'` before
-   any query, from an EF Core connection or transaction interceptor. `SET LOCAL` dies with the
-   transaction, so a pooled connection never carries a stale user into the next request.
+5. Per request, inside one transaction, the API executes
+   `select set_config('app.user_id', @userId, true)`, the parameterized form of
+   `SET LOCAL app.user_id`, before any query. A global MVC action filter opens that transaction
+   and commits it only if the action succeeded. `SET LOCAL` dies with the transaction, so a
+   pooled connection never carries a stale user into the next request.
 6. Integration tests in phases 4 and 5 prove that two users cannot read or modify each other's
    rows, including attempts by id.
 

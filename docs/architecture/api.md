@@ -91,6 +91,19 @@ start outside the Development environment. The subject travels as the `sub` clai
 Auth0 access tokens. `IUserProvisioning` maps it to the local user id, creating the `users` row
 the first time.
 
+## Request pipeline
+
+1. Exception handler and status code pages, so every error leaves as problem details (PR 4.13).
+2. Authentication (`Development` scheme until phase 5) and authorization (authenticated by
+   default).
+3. `UserTransactionFilter`, a global MVC action filter: it maps the `sub` claim to the local user
+   through `IUserProvisioning`, binds `ICurrentUser`, and opens the user-scoped transaction.
+4. The controller action calls one handler; handlers save through `IUnitOfWork`.
+5. Back in the filter, the transaction commits if the action completed, and rolls back if it
+   threw.
+
+The health endpoint is not an MVC action, so it never opens a transaction.
+
 ## Endpoints
 
 | Method and path | Authentication | Purpose                            |
