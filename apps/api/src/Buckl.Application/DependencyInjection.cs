@@ -1,6 +1,7 @@
 using Buckl.Application.Garments;
 using Buckl.Application.Products;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Buckl.Application;
 
@@ -11,9 +12,12 @@ public static class DependencyInjection
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<ListWardrobeHandler>();
         services.AddScoped<GetGarmentHandler>();
         services.AddScoped<GetProductHandler>();
+        services.AddScoped<CreateGarmentHandler>();
+        services.AddScoped<UpdateGarmentHandler>();
 
         return services;
     }
