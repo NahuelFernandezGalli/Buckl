@@ -96,10 +96,11 @@ Buckl is a monorepo with npm workspaces. `apps/web` is an npm workspace; `apps/a
 is a .NET solution built by its own CI job rather than an npm workspace. `docs/` holds this
 documentation.
 
-CI runs on every pull request: lint, typecheck, tests and build for the web, plus secret scanning
-and a dependency audit for both ecosystems. The API job (`CI / Api`) restores, builds with
-warnings as errors, verifies formatting and runs the .NET tests; it is a required check on
-`develop` and `main`.
+CI checks every pull request: lint, typecheck, tests and build for the web, plus secret scanning,
+Prettier formatting and a dependency audit for both ecosystems. The API job (`CI / Api`) restores,
+builds with warnings as errors, verifies formatting and runs the .NET tests; it is a required check
+on `develop` and `main`. The web, API and audit jobs run only when a pull request touches their
+paths and are skipped otherwise ([ADR-0027](../adr/0027-run-ci-jobs-only-for-the-paths-a-change-touches.md)).
 
 ## A request end to end
 

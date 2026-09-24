@@ -41,3 +41,4 @@ one and update the old one's status.
 | [0024](0024-apply-migrations-explicitly-with-the-owner-role.md)      | Apply migrations explicitly with the owner role                         | Accepted                                                     | 2026-09-22 |
 | [0025](0025-bind-each-request-to-one-user-scoped-transaction.md)     | Bind each request to one user-scoped transaction                        | Accepted                                                     | 2026-09-22 |
 | [0026](0026-authenticate-with-a-development-scheme-until-auth0.md)   | Authenticate with a development scheme until Auth0 arrives              | Accepted                                                     | 2026-09-22 |
+| [0027](0027-run-ci-jobs-only-for-the-paths-a-change-touches.md)      | Run CI jobs only for the paths a change touches                         | Accepted                                                     | 2026-09-24 |
