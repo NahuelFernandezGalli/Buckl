@@ -1,8 +1,16 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Buckl.Api/Buckl.Api.csproj" />
+    <Project Path="src/Buckl.Application/Buckl.Application.csproj" />
     <Project Path="src/Buckl.Domain/Buckl.Domain.csproj" />
+    <Project Path="src/Buckl.Infrastructure/Buckl.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Buckl.Api.Tests/Buckl.Api.Tests.csproj" />
+    <Project Path="tests/Buckl.Application.Tests/Buckl.Application.Tests.csproj" />
+    <Project Path="tests/Buckl.Architecture.Tests/Buckl.Architecture.Tests.csproj" />
     <Project Path="tests/Buckl.Domain.Tests/Buckl.Domain.Tests.csproj" />
+    <Project Path="tests/Buckl.Infrastructure.Tests/Buckl.Infrastructure.Tests.csproj" />
+    <Project Path="tests/Buckl.Testing/Buckl.Testing.csproj" />
   </Folder>
 </Solution>

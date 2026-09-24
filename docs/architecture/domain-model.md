@@ -98,8 +98,14 @@ API writes them as a side effect of imports. A product row carries no personal d
   `DateOnly today` and normalize timestamps to UTC.
 - Identifiers are `readonly record struct` types wrapping a GUID (`ProductId`, `GarmentId`,
   `UserId`), created with `New()`; an empty GUID is rejected. Aggregates are `sealed class` types
-  with a private constructor and a static `Create` factory; identity is the id, and no custom
+  with a private constructor, a static `Create` factory for new instances and a static `Rehydrate`
+  factory that persistence adapters use to rebuild stored ones; identity is the id, and no custom
   equality is defined.
+- `Rehydrate` takes a snapshot record (`GarmentSnapshot`, `ProductSnapshot`), re-checks the
+  invariants that tie fields together and skips creation and transition rules: a stored garment
+  may already be archived, and a stored purchase date is not compared with today again
+  (`PurchaseInfo.Rehydrate`). `PhotoKey.Parse` rebuilds a stored key and reads its owner from the
+  `users/<ownerId>/` prefix.
 - Invalid input throws `DomainValidationException` with a stable code (`money.negative_amount`);
   illegal state transitions throw a dedicated exception per rule. See
   [ADR-0015](../adr/0015-signal-domain-rule-violations-with-typed-exceptions.md). Codes are
@@ -159,25 +165,36 @@ message text. The table grows with each pull request that adds a rule.
 | `classification.unknown_category`      | `Classification.Create`                                         | Category outside the enum                            |
 | `classification.unknown_color`         | `Classification.Create`                                         | Color outside the enum                               |
 | `product_id.empty`                     | `ProductId` constructor                                         | Empty GUID                                           |
-| `product.name_empty`                   | `Product.Create`                                                | Blank name                                           |
-| `product.name_too_long`                | `Product.Create`                                                | Name over 200 characters                             |
-| `product.brand_too_long`               | `Product.Create`                                                | Brand over 100 characters                            |
-| `product.image_url_not_https`          | `Product.Create`                                                | Image URL not absolute https                         |
-| `product.source_url_invalid`           | `Product.Create`                                                | Source URL not absolute http or https                |
-| `product.unknown_source`               | `Product.Create`                                                | Import source outside the enum                       |
+| `product.name_empty`                   | `Product.Create`, `Product.Rehydrate`                           | Blank name                                           |
+| `product.name_too_long`                | `Product.Create`, `Product.Rehydrate`                           | Name over 200 characters                             |
+| `product.brand_too_long`               | `Product.Create`, `Product.Rehydrate`                           | Brand over 100 characters                            |
+| `product.image_url_not_https`          | `Product.Create`, `Product.Rehydrate`                           | Image URL not absolute https                         |
+| `product.source_url_invalid`           | `Product.Create`, `Product.Rehydrate`                           | Source URL not absolute http or https                |
+| `product.unknown_source`               | `Product.Create`, `Product.Rehydrate`                           | Import source outside the enum                       |
 | `user_id.empty`                        | `UserId` constructor                                            | Empty GUID                                           |
 | `garment_id.empty`                     | `GarmentId` constructor                                         | Empty GUID                                           |
-| `photo_key.empty`                      | `PhotoKey.Create`                                               | Blank key                                            |
-| `photo_key.too_long`                   | `PhotoKey.Create`                                               | Key over 512 characters                              |
-| `photo_key.outside_owner_prefix`       | `PhotoKey.Create`                                               | Key not under `users/<ownerId>/`                     |
-| `garment.unknown_source`               | `Garment.Create`                                                | Import source outside the enum                       |
-| `garment.photo_not_owned`              | `Garment.Create`                                                | Photo belongs to another user                        |
-| `garment.notes_too_long`               | `Garment.Create`                                                | Notes over 500 characters                            |
+| `photo_key.empty`                      | `PhotoKey.Create`, `PhotoKey.Parse`                             | Blank key                                            |
+| `photo_key.too_long`                   | `PhotoKey.Create`, `PhotoKey.Parse`                             | Key over 512 characters                              |
+| `photo_key.outside_owner_prefix`       | `PhotoKey.Create`, `PhotoKey.Parse`                             | Key not under `users/<ownerId>/`                     |
+| `garment.unknown_source`               | `Garment.Create`, `Garment.Rehydrate`                           | Import source outside the enum                       |
+| `garment.photo_not_owned`              | `Garment.Create`, `Garment.Rehydrate`                           | Photo belongs to another user                        |
+| `garment.notes_too_long`               | `Garment.Create`, `Garment.Rehydrate`                           | Notes over 500 characters                            |
+| `garment.unknown_status`               | `Garment.Rehydrate`                                             | Stored status outside the enum                       |
+| `garment.inconsistent_archive_state`   | `Garment.Rehydrate`                                             | Archive time does not match status                   |
+| `garment.updated_before_created`       | `Garment.Rehydrate`                                             | Update time before creation time                     |
 | `garment.already_archived`             | `Garment.Archive`                                               | Archiving an archived garment                        |
 | `garment.not_archived`                 | `Garment.Restore`                                               | Restoring an active garment                          |
 | `garment.archived_read_only`           | `Garment.Update*`, `Garment.ReplacePhoto`                       | Editing an archived garment                          |
 | `garment.not_found`                    | Web app `GarmentNotFoundError`; the API as a `404` from phase 4 | Garment does not exist or is not visible to the user |
 | `wardrobe_filter.search_text_too_long` | `WardrobeFilter.SearchText`                                     | Search text over 100 characters                      |
+
+The application layer adds two codes for resources the current user cannot see, whether they do
+not exist or Row-Level Security hides them. The API maps both to `404`.
+
+| Code                | Raised by                                | Meaning                       |
+| ------------------- | ---------------------------------------- | ----------------------------- |
+| `garment.not_found` | `GarmentNotFoundException` (application) | No such garment for this user |
+| `product.not_found` | `ProductNotFoundException` (application) | No such product               |
 
 ## Open questions
 

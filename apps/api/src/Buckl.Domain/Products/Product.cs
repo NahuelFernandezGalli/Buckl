@@ -60,22 +60,39 @@ public sealed class Product
     {
         ArgumentNullException.ThrowIfNull(name);
 
-        if (!Enum.IsDefined(source))
-        {
-            throw new DomainValidationException(
-                Errors.UnknownSource,
-                $"Unknown import source '{source}'.");
-        }
-
         return new Product(
             ProductId.New(),
             NormalizeName(name),
             NormalizeBrand(brand),
             ValidateReferenceImageUrl(referenceImageUrl),
             ValidateSourceUrl(sourceUrl),
-            source,
+            EnsureKnown(source),
             now.ToUniversalTime());
     }
+
+    /// <summary>Rebuilds a stored product. Products are immutable, so the same validation as
+    /// creation applies; only the id and the creation time come from storage.</summary>
+    public static Product Rehydrate(ProductSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(snapshot.Name);
+
+        return new Product(
+            snapshot.Id,
+            NormalizeName(snapshot.Name),
+            NormalizeBrand(snapshot.Brand),
+            ValidateReferenceImageUrl(snapshot.ReferenceImageUrl),
+            ValidateSourceUrl(snapshot.SourceUrl),
+            EnsureKnown(snapshot.Source),
+            snapshot.CreatedAt.ToUniversalTime());
+    }
+
+    private static ImportSource EnsureKnown(ImportSource source) =>
+        Enum.IsDefined(source)
+            ? source
+            : throw new DomainValidationException(
+                Errors.UnknownSource,
+                $"Unknown import source '{source}'.");
 
     private static string NormalizeName(string name)
     {

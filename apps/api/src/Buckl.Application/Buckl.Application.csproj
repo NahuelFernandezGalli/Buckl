@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Application layer: use cases and the ports they need. Depends only on the domain and on the
+       dependency injection abstractions, never on a persistence or web framework. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Buckl.Domain/Buckl.Domain.csproj" />
+  </ItemGroup>
+</Project>

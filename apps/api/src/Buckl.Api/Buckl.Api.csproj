@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- HTTP surface and composition root. The only project that references Infrastructure. -->
+  <PropertyGroup>
+    <!-- Local secrets (the Neon connection string) live outside the repository: dotnet user-secrets. -->
+    <UserSecretsId>buckl-api</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Buckl.Application/Buckl.Application.csproj" />
+    <ProjectReference Include="../Buckl.Infrastructure/Buckl.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+</Project>

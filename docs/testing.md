@@ -4,12 +4,12 @@ How Buckl is tested, layer by layer, and the cycle each one follows. The decisio
 document are [ADR-0013](adr/0013-use-bdd-for-front-end-features.md) for testing style and
 [ADR-0011](adr/0011-gate-merges-with-local-hooks-and-ci.md) for the checks that enforce it.
 
-| Layer                          | Style                       | Tools                                        | Cycle                                   |
-| ------------------------------ | --------------------------- | -------------------------------------------- | --------------------------------------- |
-| Domain and application (.NET)  | Test-driven development     | xUnit                                        | red, green, refactor                    |
-| Infrastructure adapters (.NET) | Integration tests           | xUnit, Postgres in a container, test doubles | written with the adapter                |
-| Front-end features             | Behavior-driven development | Gherkin, vitest-cucumber, Testing Library    | scenario, automate, implement, refactor |
-| Front-end helpers with no UI   | Unit tests                  | Vitest                                       | red, green, refactor                    |
+| Layer                          | Style                       | Tools                                                 | Cycle                                   |
+| ------------------------------ | --------------------------- | ----------------------------------------------------- | --------------------------------------- |
+| Domain and application (.NET)  | Test-driven development     | xUnit v3                                              | red, green, refactor                    |
+| Infrastructure adapters (.NET) | Integration tests           | xUnit v3, Postgres 17 in a container (Testcontainers) | written with the adapter                |
+| Front-end features             | Behavior-driven development | Gherkin, vitest-cucumber, Testing Library             | scenario, automate, implement, refactor |
+| Front-end helpers with no UI   | Unit tests                  | Vitest                                                | red, green, refactor                    |
 
 Everything runs under `npm run test` for the front end and the .NET test job for the API. Both are
 required checks on `main`, so a red test blocks the merge.
@@ -33,7 +33,35 @@ Conventions:
 - Time comes from `TestClock`, which holds fixed values, never from `DateTimeOffset.UtcNow`.
 - Valid fixtures come from Object Mothers (`GarmentMother.Active()`), so a test shows only the
   data that matters to it.
-- No mocking framework in the domain: the domain has no dependencies to mock.
+- No mocking framework. The domain has no dependencies to mock; application handlers are tested
+  against hand-written fakes in `Buckl.Application.Tests/Fakes` (an in-memory repository, a fixed
+  current user, a unit of work that counts saves), and time comes from `FixedTimeProvider`.
+
+Running the suite: from `apps/api`, `dotnet test` runs every test project on Microsoft Testing
+Platform ([ADR-0021](adr/0021-use-xunit-v3-on-microsoft-testing-platform.md)). Run it from that
+directory, because the SDK reads `apps/api/global.json` from the current directory. To run one
+class, use `dotnet test --filter-class Buckl.Domain.Tests.Garments.GarmentArchivingTests`.
+
+Tests pass `TestContext.Current.CancellationToken` to every call that accepts a cancellation
+token; the xUnit analyzers turn a missing token into a build error.
+
+## Integration tests against Postgres
+
+Adapters that talk to the database are tested against a real Postgres 17, never a fake or an
+in-memory provider, because Row-Level Security, constraints and SQL translation are what those
+tests are about.
+
+- Each test assembly that needs the database declares
+  `[assembly: AssemblyFixture(typeof(PostgresDatabase))]`; one container starts per assembly and
+  test classes receive `PostgresDatabase` in their constructor. Docker must be running.
+- The fixture migrates the database with the owner role and creates `buckl_app`, the role the API
+  uses at runtime, exactly as a real environment is set up.
+- The owner bypasses Row-Level Security. Tests arrange data as the owner (`DatabaseSeed`) and act
+  as `buckl_app`, so the behavior under test always goes through the policies.
+- Tests never clean tables: each one creates its own users and garments with fresh ids and only
+  looks at those.
+- Timestamps come from `TestClock`; Postgres keeps microseconds, so a value from the real clock
+  would not compare equal after a round trip.
 
 ## The front-end cycle
 

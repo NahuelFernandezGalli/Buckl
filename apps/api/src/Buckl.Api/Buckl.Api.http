@@ -1,0 +1,52 @@
+@api = http://localhost:5080
+@alice = dev|alice
+@bob = dev|bob
+
+### Liveness, anonymous
+GET {{api}}/health
+
+### Alice adds a garment
+# @name added
+POST {{api}}/garments
+X-Dev-User: {{alice}}
+Content-Type: application/json
+
+{
+  "classification": { "category": "top", "color": "blue", "size": "M" },
+  "purchaseInfo": { "price": { "amount": 49.90, "currency": "USD" }, "date": "2026-09-01" },
+  "notes": "Oxford shirt"
+}
+
+### Alice's wardrobe: one garment
+GET {{api}}/garments
+X-Dev-User: {{alice}}
+
+### Bob's wardrobe: empty
+GET {{api}}/garments
+X-Dev-User: {{bob}}
+
+### Bob asks for Alice's garment: 404 garment.not_found
+GET {{api}}/garments/{{added.response.body.id}}
+X-Dev-User: {{bob}}
+
+### Alice edits only the notes
+PATCH {{api}}/garments/{{added.response.body.id}}
+X-Dev-User: {{alice}}
+Content-Type: application/json
+
+{ "notes": "Needs ironing" }
+
+### Alice archives it
+POST {{api}}/garments/{{added.response.body.id}}/archive
+X-Dev-User: {{alice}}
+
+### Alice's archived garments
+GET {{api}}/garments?status=archived
+X-Dev-User: {{alice}}
+
+### Alice restores it
+POST {{api}}/garments/{{added.response.body.id}}/restore
+X-Dev-User: {{alice}}
+
+### Without identity: 401 request.unauthenticated
+GET {{api}}/garments

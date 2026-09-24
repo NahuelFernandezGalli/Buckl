@@ -29,3 +29,16 @@ updates:
       prefix: chore
       prefix-development: chore
       include: scope
+    groups:
+      xunit:
+        patterns:
+          - 'xunit*'
+      efcore:
+        patterns:
+          - 'Microsoft.EntityFrameworkCore*'
+          - 'Npgsql*'
+          - 'EFCore.*'
+      aspnetcore:
+        patterns:
+          - 'Microsoft.AspNetCore.*'
+          - 'Microsoft.Extensions.*'

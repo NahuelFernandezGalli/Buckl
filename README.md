@@ -13,12 +13,18 @@ Everything about the design, the decisions and the vocabulary lives in [`docs/`]
 ## Repository layout
 
 - `apps/web` — React + Vite + TypeScript front end (PWA).
-- `apps/api` — .NET solution: domain and its tests (phase 2); the remaining layers arrive in phase 4.
+- `apps/api` — .NET 10 solution: domain, application, infrastructure and API projects, with one
+  test project per layer.
 - `docs` — architecture, ADRs, glossary, privacy.
 
 ## Development
 
 Requires Node 22 or newer and the .NET 10 SDK, pinned by `apps/api/global.json`.
+
+API tests need Docker running, because they start Postgres in a container. Everything about the
+API, from tests to migrations, is in [`apps/api/README.md`](apps/api/README.md).
+
+To run the API against a database, see "Running the API locally" in the same file.
 
 Web:
 

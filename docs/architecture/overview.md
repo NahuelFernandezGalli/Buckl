@@ -82,9 +82,12 @@ flowchart LR
   `PurchaseInfo`, `Category`, `Size`, `Color`) and repository interfaces live here.
 - `Buckl.Application` orchestrates use cases (`ListWardrobe`, `CreateGarment`, and the rest)
   against the domain and its ports.
-- `Buckl.Infrastructure` implements the ports: EF Core repositories, RLS session interceptor, R2
-  storage adapter.
-- `Buckl.Api` exposes HTTP endpoints, validates tokens and maps errors to ProblemDetails.
+- `Buckl.Infrastructure` implements the ports: EF Core repositories, per-request user transaction
+  ([ADR-0025](../adr/0025-bind-each-request-to-one-user-scoped-transaction.md)), R2 storage
+  adapter.
+- `Buckl.Api` exposes MVC controllers, maps errors to problem details with a stable `code`, runs
+  every action inside its user's transaction (a global action filter) and authenticates with a
+  development scheme until Auth0 replaces it in phase 5. The details are in [API](api.md).
 - Architecture tests (phase 4) fail the build if a layer references one it must not.
 
 ## Repository layout
@@ -93,10 +96,11 @@ Buckl is a monorepo with npm workspaces. `apps/web` is an npm workspace; `apps/a
 is a .NET solution built by its own CI job rather than an npm workspace. `docs/` holds this
 documentation.
 
-CI runs on every pull request: lint, typecheck, tests and build for the web, plus secret scanning
-and a dependency audit for both ecosystems. The API job (`CI / Api`) restores, builds with
-warnings as errors, verifies formatting and runs the .NET tests; it is a required check on
-`develop` and `main`.
+CI checks every pull request: lint, typecheck, tests and build for the web, plus secret scanning,
+Prettier formatting and a dependency audit for both ecosystems. The API job (`CI / Api`) restores,
+builds with warnings as errors, verifies formatting and runs the .NET tests; it is a required check
+on `develop` and `main`. The web, API and audit jobs run only when a pull request touches their
+paths and are skipped otherwise ([ADR-0027](../adr/0027-run-ci-jobs-only-for-the-paths-a-change-touches.md)).
 
 ## A request end to end
 
@@ -105,8 +109,8 @@ Loading the wardrobe, once every phase is in place:
 1. The user opens the app; the PWA shell loads from the static host.
 2. If there is no session, the web app redirects to Auth0 and receives an access token.
 3. The web app calls `GET /garments` with `Authorization: Bearer <token>`.
-4. The API validates the token, upserts the local `User`, opens a transaction and executes
-   `SET LOCAL app.user_id = '<user id>'`.
+4. The API validates the token, maps its subject to the local user (creating it on the first
+   request), opens a transaction and executes `set_config('app.user_id', '<user id>', true)`.
 5. EF Core queries `garments`; RLS policies filter rows to that user.
 6. For each garment with a photo, the API returns a short-lived signed read URL for R2.
 7. The web app renders the grid; photos load directly from R2.

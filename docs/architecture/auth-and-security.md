@@ -27,8 +27,9 @@ sequenceDiagram
     W->>API: GET /garments with bearer access token
     API->>A: Fetch JWKS (cached)
     API->>API: Validate signature, issuer, audience, expiry
-    API->>DB: BEGIN, upsert users by auth0_subject
-    API->>DB: SET LOCAL app.user_id
+    API->>DB: Upsert users by auth0_subject
+    API->>DB: BEGIN
+    API->>DB: select set_config('app.user_id', ...)
     API->>DB: SELECT from garments
     DB-->>API: Only rows owned by that user
     API-->>W: 200 with garments
@@ -38,15 +39,20 @@ sequenceDiagram
 
 - Authority (issuer) and audience come from configuration, never hard-coded.
 - Every endpoint requires an authenticated user by default (`[Authorize]` as the fallback policy);
-  only the health endpoint is anonymous.
+  only the health endpoint is anonymous. In the Development environment, `/openapi/v1.json` and
+  `/scalar/v1` are anonymous too (see `apps/api/src/Buckl.Api/Program.cs`).
 - A missing or invalid token yields `401`. A valid token that targets another user's resource
   yields `404`, so the API never leaks the existence of other users' rows.
 - Tokens are validated against Auth0's JWKS, cached and refreshed on key rotation.
+- Until phase 5 the API uses a development-only scheme instead: the `X-Dev-User` header names the
+  subject ([ADR-0026](../adr/0026-authenticate-with-a-development-scheme-until-auth0.md)). It is
+  registered only in the Development environment, and the API does not start anywhere else.
 
 ### Local user record
 
-- On the first authenticated request the API upserts a row in `users` keyed by the token's `sub`
-  claim. The generated `users.id` (UUID) is what the rest of the system uses as `UserId`.
+- On every authenticated request the API upserts a row in `users` keyed by the token's `sub`
+  claim (a development subject in phase 4) and binds the resulting local id to the request. The
+  generated `users.id` (UUID) is what the rest of the system uses as `UserId`.
 - The API stores nothing else from the token in v1. Display name and email stay in Auth0.
 
 ## Data isolation with Row-Level Security
@@ -57,19 +63,22 @@ sequenceDiagram
 3. One policy per table covers all commands:
 
    ```sql
-   CREATE POLICY garments_owner ON garments
-     USING (user_id = current_setting('app.user_id', true)::uuid)
-     WITH CHECK (user_id = current_setting('app.user_id', true)::uuid);
+   create policy garments_owner on garments
+       using      (user_id = nullif(current_setting('app.user_id', true), '')::uuid)
+       with check (user_id = nullif(current_setting('app.user_id', true), '')::uuid);
    ```
 
-   With `current_setting(..., true)` a missing variable yields `NULL`, so a request that forgot to
-   set it sees no rows instead of all rows.
+   With `current_setting(..., true)` a missing variable yields `NULL`, and `nullif` turns the empty
+   string a reused connection reports into `NULL` too, so a request that forgot to set it sees no
+   rows instead of all rows or an error.
 
 4. The API connects with a dedicated role (`buckl_app`) that owns no tables and has neither
    `BYPASSRLS` nor `SUPERUSER`. Migrations run with a separate role.
-5. Per request, inside one transaction, the API executes `SET LOCAL app.user_id = '<uuid>'` before
-   any query, from an EF Core connection or transaction interceptor. `SET LOCAL` dies with the
-   transaction, so a pooled connection never carries a stale user into the next request.
+5. Per request, inside one transaction, the API executes
+   `select set_config('app.user_id', @userId, true)`, the parameterized form of
+   `SET LOCAL app.user_id`, before any query. A global MVC action filter opens that transaction
+   and commits it only if the action succeeded. `SET LOCAL` dies with the transaction, so a
+   pooled connection never carries a stale user into the next request.
 6. Integration tests in phases 4 and 5 prove that two users cannot read or modify each other's
    rows, including attempts by id.
 

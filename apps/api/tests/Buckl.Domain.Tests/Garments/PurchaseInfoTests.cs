@@ -51,4 +51,22 @@ public class PurchaseInfoTests
 
         Assert.Equal(a, b);
     }
+
+    [Fact]
+    public void Rehydrate_keeps_price_and_date_without_comparing_with_today()
+    {
+        var price = Money.Create(49.90m, "USD");
+        var dateAheadOfTheReaderClock = TestClock.Today.AddDays(1);
+
+        var info = PurchaseInfo.Rehydrate(price, dateAheadOfTheReaderClock);
+
+        Assert.Equal(price, info.Price);
+        Assert.Equal(dateAheadOfTheReaderClock, info.Date);
+    }
+
+    [Fact]
+    public void Rehydrate_requires_a_price()
+    {
+        Assert.Throws<ArgumentNullException>(() => PurchaseInfo.Rehydrate(null!, TestClock.Today));
+    }
 }
