@@ -81,6 +81,16 @@ Handlers persist through `IUnitOfWork.SaveChangesAsync`, which writes inside tha
 they never commit. The integration tests prove that a committed user does not leak into the next
 use of a pooled connection.
 
+## Authentication
+
+Every endpoint requires an authenticated user unless it opts out explicitly. Until phase 5 the
+only scheme is `Development`
+([ADR-0026](../adr/0026-authenticate-with-a-development-scheme-until-auth0.md)): the
+`X-Dev-User: <subject>` header authenticates the request as that subject, and the API refuses to
+start outside the Development environment. The subject travels as the `sub` claim, as it will in
+Auth0 access tokens. `IUserProvisioning` maps it to the local user id, creating the `users` row
+the first time.
+
 ## Endpoints
 
 | Method and path | Authentication | Purpose                            |

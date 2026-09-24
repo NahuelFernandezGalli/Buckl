@@ -5,6 +5,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Buckl.Api/Buckl.Api.csproj" />
+    <ProjectReference Include="../Buckl.Testing/Buckl.Testing.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
