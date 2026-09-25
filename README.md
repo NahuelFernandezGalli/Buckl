@@ -36,13 +36,16 @@ npm run test
 npm run build
 ```
 
-API (domain only until phase 4):
+API, from `apps/api` (the SDK reads `apps/api/global.json` from the current directory):
 
 ```bash
-dotnet build apps/api
-dotnet test apps/api
-dotnet format apps/api --verify-no-changes
+dotnet build
+dotnet test
+dotnet format --verify-no-changes
 ```
+
+Both apps read their settings from outside the repository; see
+[`docs/configuration.md`](docs/configuration.md).
 
 Commits follow Conventional Commits and are checked by local hooks and CI. Feature branches are
 merged into `develop`; `develop` is merged into `main` at the end of each phase.

@@ -23,7 +23,8 @@ One class: `dotnet test --filter-class Buckl.Infrastructure.Tests.Persistence.In
 
 The API runs against the `dev` branch of the Neon project, as `buckl_app`, and accepts access
 tokens from the Auth0 development tenant. One-time setup: create the branch and the role, and
-migrate the branch, as described in "Database roles" and "Database migrations" below.
+migrate the branch, as described in "Database roles" and "Database migrations" below. Every
+setting is listed in [Configuration](../../docs/configuration.md).
 
 Store the local settings outside the repository, once. `Auth0:Domain` is the tenant domain
 (without `https://`) and `Auth0:Audience` the identifier of the "Buckl API" registered in it:
