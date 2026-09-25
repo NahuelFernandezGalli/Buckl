@@ -55,6 +55,15 @@ sequenceDiagram
   the rest of the system uses as `UserId`.
 - The API stores nothing else from the token in v1. Display name and email stay in Auth0.
 
+### Session in the web app
+
+- The SDK caches the access, refresh and ID tokens in local storage and renews access tokens with
+  rotating refresh tokens ([ADR-0030](../adr/0030-keep-the-web-session-with-rotating-refresh-tokens.md)).
+  Access tokens last one hour; refresh tokens 15 days without use and 30 days at most, and a
+  replayed one revokes the whole family.
+- After a login, the app only navigates to paths inside itself (`safeReturnTo`), never to an
+  address carried in the login state.
+
 ## Data isolation with Row-Level Security
 
 1. Every user-scoped table (`garments`, later `outfits` and `wear_logs`) has a
@@ -135,12 +144,14 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 
 ## Threats considered
 
-| Threat                                    | Mitigation                                                         |
-| ----------------------------------------- | ------------------------------------------------------------------ |
-| Bug in a query forgets to filter by user  | RLS policy filters anyway; a missing `app.user_id` means no rows   |
-| Stolen or forged token                    | Signature, issuer, audience and expiry validation; short lifetime  |
-| Guessing another user's garment id        | RLS returns nothing and the API answers `404`                      |
-| Credentials in the front-end bundle       | No secrets in the web app; presigned URLs for storage              |
-| Secrets committed to git                  | gitleaks in CI, `.env` ignored, rotation on any leak               |
-| Malicious product URL on import (phase 7) | SSRF guard: http and https only, no private IPs, timeout, size cap |
-| Machine-to-machine token for the API      | No machine-to-machine application is authorized for the API        |
+| Threat                                    | Mitigation                                                                                                                                           |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bug in a query forgets to filter by user  | RLS policy filters anyway; a missing `app.user_id` means no rows                                                                                     |
+| Stolen or forged token                    | Signature, issuer, audience and expiry validation; short lifetime                                                                                    |
+| Guessing another user's garment id        | RLS returns nothing and the API answers `404`                                                                                                        |
+| Credentials in the front-end bundle       | No secrets in the web app; presigned URLs for storage                                                                                                |
+| Secrets committed to git                  | gitleaks in CI, `.env` ignored, rotation on any leak                                                                                                 |
+| Malicious product URL on import (phase 7) | SSRF guard: http and https only, no private IPs, timeout, size cap                                                                                   |
+| Machine-to-machine token for the API      | No machine-to-machine application is authorized for the API                                                                                          |
+| Token stolen from local storage (XSS)     | No third-party scripts; React escaping; refresh token rotation with reuse detection; one-hour access tokens; strict CSP on the static host (phase 9) |
+| Open redirect after login                 | Only in-app paths are accepted as the destination (`safeReturnTo`)                                                                                   |

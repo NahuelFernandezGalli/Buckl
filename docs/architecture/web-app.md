@@ -13,6 +13,7 @@ TypeScript and Vitest; testing follows [the testing strategy](../testing.md).
 | `src/domain`     | TypeScript mirror of the domain types and repository ports (phase 3, PR 3.3).                                |
 | `src/data`       | Implementations of the ports: in-memory in phase 3, HTTP from phase 6.                                       |
 | `src/lib`        | Pure helpers with unit tests (formatting, dates, files).                                                     |
+| `src/session`    | The session port, its Auth0 adapter and the return-path guard (phase 5).                                     |
 | `src/styles`     | Design tokens and base styles (phase 3, PR 3.2).                                                             |
 | `src/test`       | Test helpers: `renderApp`, object mothers, global setup.                                                     |
 
@@ -57,6 +58,25 @@ hands the file to its page as a `Blob`, which crosses the port unchanged (`NewGa
 `InMemoryGarmentRepository` turns the blob into a data URL and serves it as `photoUrl`; in phase 6
 the HTTP repository uploads it to R2 through a presigned URL instead, with no change to the screens.
 Sample garments use `placeholderPhoto(color)`, a flat SVG.
+
+## Session
+
+Screens learn who is signed in through the `Session` port in `src/session/session.ts`
+([ADR-0029](../adr/0029-handle-sign-in-through-a-session-port-in-the-web-app.md)) and
+`useSession()`. `Auth0SessionProvider` implements it over `@auth0/auth0-react`:
+
+| Port               | Auth0                                                                  |
+| ------------------ | ---------------------------------------------------------------------- |
+| `state: loading`   | the SDK is restoring the session or finishing a login                  |
+| `state: signedIn`  | authenticated; `displayName` is the profile name, or the email         |
+| `state: signedOut` | not authenticated; `error` is set after a failed login                 |
+| `signIn(returnTo)` | `loginWithRedirect` to Auth0, back to `/callback`, then to `returnTo`  |
+| `signOut()`        | `logout`, back to `/welcome`                                           |
+| `getAccessToken()` | `getAccessTokenSilently`; `SessionExpiredError` when a login is needed |
+
+Tokens are cached in local storage and renewed with rotating refresh tokens
+([ADR-0030](../adr/0030-keep-the-web-session-with-rotating-refresh-tokens.md)). `safeReturnTo`
+accepts only paths inside the app as the destination after a login.
 
 ## Design system
 
