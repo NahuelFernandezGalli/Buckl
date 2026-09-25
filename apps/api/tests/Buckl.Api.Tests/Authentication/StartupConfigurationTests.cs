@@ -34,4 +34,15 @@ public class StartupConfigurationTests
         var invalid = Assert.IsType<OptionsValidationException>(exception);
         Assert.Contains("Auth0", invalid.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void The_api_refuses_to_start_with_a_cors_entry_that_is_not_an_origin()
+    {
+        using var factory = ProductionHost.Create(("Cors:AllowedOrigins:0", "https://buckl.app/"));
+
+        var exception = Record.Exception(() => factory.CreateClient());
+
+        var invalid = Assert.IsType<OptionsValidationException>(exception);
+        Assert.Contains("Cors:AllowedOrigins", invalid.Message, StringComparison.Ordinal);
+    }
 }

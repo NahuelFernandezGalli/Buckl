@@ -86,8 +86,18 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 
 ## CORS
 
-- The API allows only the web app's origins, from configuration: `http://localhost:5173` in
-  development and the production origin from phase 9.
+- The API allows only the web app's origins, from `Cors:AllowedOrigins`: `http://localhost:5173`
+  (Vite dev server) and `http://localhost:4173` (Vite preview) in Development, the production
+  origin from phase 9. An empty list allows no cross-origin call.
+- Every entry must be an origin (scheme, host, optional port; no path, no trailing slash, no
+  wildcard). The API refuses to start otherwise, because a browser never sends
+  `https://buckl.app/` and the mismatch would silently cut the web app off.
+- Allowed methods are `GET`, `POST` and `PATCH`; allowed request headers, `Authorization` and
+  `Content-Type`. `Location` is exposed so the web app can read where a new garment lives.
+  Credentials (cookies) are not allowed: the token travels in `Authorization`. Browsers may cache a
+  preflight for ten minutes.
+- CORS runs before authentication, so a preflight, which never carries a token, is answered
+  without being challenged.
 - CORS is a browser-side protection, complementary to authentication. It is not an access control:
   every request still needs a valid token.
 
@@ -111,9 +121,15 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 ## Transport and headers
 
 - HTTPS everywhere in production; the static host and the API host provide certificates.
-- Security headers on API responses (HSTS, `X-Content-Type-Options: nosniff`, a restrictive
-  `Referrer-Policy`) are added in phase 5. Rate limiting on import and upload endpoints comes in
-  phase 10.
+- Every API response, errors included, carries `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
+  `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` (except the development
+  API reference, an HTML page), and `Cache-Control: no-store` unless the endpoint set its own.
+- Outside Development, HTTPS responses carry `Strict-Transport-Security: max-age=31536000`. Behind
+  a proxy that terminates TLS, the API only sees HTTPS once forwarded headers are configured
+  (phase 9).
+- Kestrel does not send a `Server` header.
+- Rate limiting on import and upload endpoints comes in phase 10.
 
 ## Threats considered
 
