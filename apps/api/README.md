@@ -21,14 +21,23 @@ One class: `dotnet test --filter-class Buckl.Infrastructure.Tests.Persistence.In
 
 ## Running the API locally
 
-The API runs against the `dev` branch of the Neon project, as `buckl_app`. One-time setup: create
-the branch and the role, and migrate the branch, as described in "Database roles" and "Database
-migrations" below.
+The API runs against the `dev` branch of the Neon project, as `buckl_app`, and accepts access
+tokens from the Auth0 development tenant. One-time setup: create the branch and the role, and
+migrate the branch, as described in "Database roles" and "Database migrations" below.
 
-Store the application role's connection string outside the repository, once:
+Store the local settings outside the repository, once. `Auth0:Domain` is the tenant domain
+(without `https://`) and `Auth0:Audience` the identifier of the "Buckl API" registered in it:
 
 ```bash
 dotnet user-secrets set "ConnectionStrings:Buckl" "Host=<ep-...>.neon.tech;Database=buckl;Username=buckl_app;Password=<...>;SSL Mode=Require" --project src/Buckl.Api
+```
+
+```bash
+dotnet user-secrets set "Auth0:Domain" "<tenant>.us.auth0.com" --project src/Buckl.Api
+```
+
+```bash
+dotnet user-secrets set "Auth0:Audience" "https://api.buckl.app" --project src/Buckl.Api
 ```
 
 Then:
@@ -37,10 +46,21 @@ Then:
 dotnet run --project src/Buckl.Api
 ```
 
-The API listens on `http://localhost:5080`. Until phase 5 it runs only in the Development
-environment and identifies callers by the `X-Dev-User` header: any value is a user, so
-`dev|alice` and `dev|bob` are two users. `src/Buckl.Api/Buckl.Api.http` walks through the whole
-flow for both, and the API reference is at `http://localhost:5080/scalar/v1`.
+The API listens on `http://localhost:5080`. It refuses to start if the Auth0 settings are missing
+or malformed, and answers `401` to any request without a valid access token except `GET /health`.
+
+`src/Buckl.Api/Buckl.Api.http` walks through the whole flow for two users. It reads their access
+tokens from `src/Buckl.Api/.env`, which git ignores:
+
+```dotenv
+ALICE_TOKEN=<access token of the first test user>
+BOB_TOKEN=<access token of the second test user>
+```
+
+To get a token, sign in to the web app at `http://localhost:5173` as that user, open the browser's
+developer tools, and copy `access_token` from the response of the `oauth/token` request. Tokens
+expire after an hour. Never paste a token into an online decoder. The API reference is at
+`http://localhost:5080/scalar/v1`.
 
 ## Database migrations
 
