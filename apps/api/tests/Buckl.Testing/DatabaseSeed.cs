@@ -103,6 +103,29 @@ public static class DatabaseSeed
         return await command.ExecuteScalarAsync(cancellationToken) as string;
     }
 
+    /// <summary>The local users recorded for a subject: one once it has been seen, never more.</summary>
+    public static async Task<IReadOnlyList<Guid>> ReadUserIdsBySubjectAsync(
+        this PostgresDatabase database,
+        string subject,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+
+        await using var connection = await database.OpenOwnerConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("select id from users where auth0_subject = $1", connection);
+        command.Parameters.Add(Parameter(subject));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        var ids = new List<Guid>();
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            ids.Add(reader.GetGuid(0));
+        }
+
+        return ids;
+    }
+
     private static async Task<bool> ExistsAsync(
         PostgresDatabase database,
         string sql,
