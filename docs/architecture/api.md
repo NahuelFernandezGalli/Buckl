@@ -124,18 +124,21 @@ The contract mirrors the web app's repository ports (`apps/web/src/domain`), so 
 in-memory repository for HTTP without touching screens. JSON is camel case, enumerations are
 lower-case strings, dates are `YYYY-MM-DD`, and timestamps are ISO 8601 in UTC.
 
-| Method and path               | Purpose                                              | Success          |
-| ----------------------------- | ---------------------------------------------------- | ---------------- |
-| `GET /health`                 | Liveness probe (anonymous)                           | 200              |
-| `GET /garments`               | Wardrobe: `?category=&color=&size=&q=&status=`       | 200              |
-| `GET /garments/{id}`          | One garment                                          | 200              |
-| `GET /products/{id}`          | One catalog product                                  | 200              |
-| `POST /garments`              | Add a garment by hand                                | 201 + `Location` |
-| `PATCH /garments/{id}`        | Partial edit: absent fields untouched, `null` clears | 200              |
-| `POST /garments/{id}/archive` | Archive                                              | 200              |
-| `POST /garments/{id}/restore` | Restore                                              | 200              |
-| `GET /openapi/v1.json`        | OpenAPI document (Development, anonymous)            | 200              |
-| `GET /scalar/v1`              | API reference UI (Development, anonymous)            | 200              |
+| Method and path               | Purpose                                                                | Success          |
+| ----------------------------- | ---------------------------------------------------------------------- | ---------------- |
+| `GET /health`                 | Liveness probe (anonymous)                                             | 200              |
+| `GET /garments`               | Wardrobe: `?category=&color=&size=&q=&status=`                         | 200              |
+| `GET /garments/{id}`          | One garment                                                            | 200              |
+| `GET /products/{id}`          | One catalog product                                                    | 200              |
+| `POST /garments`              | Add a garment by hand                                                  | 201 + `Location` |
+| `PATCH /garments/{id}`        | Partial edit: absent fields untouched, `null` clears                   | 200              |
+| `POST /garments/{id}/archive` | Archive                                                                | 200              |
+| `POST /garments/{id}/restore` | Restore                                                                | 200              |
+| `GET /openapi/v1.json`        | OpenAPI document with the bearer token scheme (Development, anonymous) | 200              |
+| `GET /scalar/v1`              | API reference UI (Development, anonymous)                              | 200              |
+
+The OpenAPI document declares the bearer token as a security requirement of every operation, so
+the API reference at `/scalar/v1` can send one.
 
 `photoUrl` is always `null` until phase 6 attaches photos. Lists are not paginated in v1.
 
