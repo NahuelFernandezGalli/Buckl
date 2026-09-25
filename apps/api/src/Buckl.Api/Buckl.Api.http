@@ -1,6 +1,9 @@
+# Requests for REST Client (VS Code). The two access tokens come from src/Buckl.Api/.env, which git
+# ignores: ALICE_TOKEN and BOB_TOKEN, for two users of the Auth0 development tenant. How to get
+# them: apps/api/README.md, "Running the API locally".
 @api = http://localhost:5080
-@alice = dev|alice
-@bob = dev|bob
+@alice = Bearer {{$dotenv ALICE_TOKEN}}
+@bob = Bearer {{$dotenv BOB_TOKEN}}
 
 ### Liveness, anonymous
 GET {{api}}/health
@@ -8,7 +11,7 @@ GET {{api}}/health
 ### Alice adds a garment
 # @name added
 POST {{api}}/garments
-X-Dev-User: {{alice}}
+Authorization: {{alice}}
 Content-Type: application/json
 
 {
@@ -19,34 +22,38 @@ Content-Type: application/json
 
 ### Alice's wardrobe: one garment
 GET {{api}}/garments
-X-Dev-User: {{alice}}
+Authorization: {{alice}}
 
 ### Bob's wardrobe: empty
 GET {{api}}/garments
-X-Dev-User: {{bob}}
+Authorization: {{bob}}
 
 ### Bob asks for Alice's garment: 404 garment.not_found
 GET {{api}}/garments/{{added.response.body.id}}
-X-Dev-User: {{bob}}
+Authorization: {{bob}}
 
 ### Alice edits only the notes
 PATCH {{api}}/garments/{{added.response.body.id}}
-X-Dev-User: {{alice}}
+Authorization: {{alice}}
 Content-Type: application/json
 
 { "notes": "Needs ironing" }
 
 ### Alice archives it
 POST {{api}}/garments/{{added.response.body.id}}/archive
-X-Dev-User: {{alice}}
+Authorization: {{alice}}
 
 ### Alice's archived garments
 GET {{api}}/garments?status=archived
-X-Dev-User: {{alice}}
+Authorization: {{alice}}
 
 ### Alice restores it
 POST {{api}}/garments/{{added.response.body.id}}/restore
-X-Dev-User: {{alice}}
+Authorization: {{alice}}
 
-### Without identity: 401 request.unauthenticated
+### Without a token: 401 request.unauthenticated
 GET {{api}}/garments
+
+### With something that is not a token: 401 request.unauthenticated
+GET {{api}}/garments
+Authorization: Bearer not-a-token

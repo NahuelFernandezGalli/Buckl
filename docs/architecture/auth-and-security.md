@@ -44,15 +44,15 @@ sequenceDiagram
 - A missing or invalid token yields `401`. A valid token that targets another user's resource
   yields `404`, so the API never leaks the existence of other users' rows.
 - Tokens are validated against Auth0's JWKS, cached and refreshed on key rotation.
-- Until phase 5 the API uses a development-only scheme instead: the `X-Dev-User` header names the
-  subject ([ADR-0026](../adr/0026-authenticate-with-a-development-scheme-until-auth0.md)). It is
-  registered only in the Development environment, and the API does not start anywhere else.
+- Only RS256 tokens are accepted, with the subject kept as `sub`; a token without a usable
+  subject is rejected. The settings and the details are in [API](api.md#authentication)
+  ([ADR-0028](../adr/0028-validate-auth0-access-tokens-with-jwt-bearer.md)).
 
 ### Local user record
 
 - On every authenticated request the API upserts a row in `users` keyed by the token's `sub`
-  claim (a development subject in phase 4) and binds the resulting local id to the request. The
-  generated `users.id` (UUID) is what the rest of the system uses as `UserId`.
+  claim and binds the resulting local id to the request. The generated `users.id` (UUID) is what
+  the rest of the system uses as `UserId`.
 - The API stores nothing else from the token in v1. Display name and email stay in Auth0.
 
 ## Data isolation with Row-Level Security
@@ -125,3 +125,4 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 | Credentials in the front-end bundle       | No secrets in the web app; presigned URLs for storage              |
 | Secrets committed to git                  | gitleaks in CI, `.env` ignored, rotation on any leak               |
 | Malicious product URL on import (phase 7) | SSRF guard: http and https only, no private IPs, timeout, size cap |
+| Machine-to-machine token for the API      | No machine-to-machine application is authorized for the API        |

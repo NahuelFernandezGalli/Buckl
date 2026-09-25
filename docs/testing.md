@@ -62,6 +62,11 @@ tests are about.
   looks at those.
 - Timestamps come from `TestClock`; Postgres keeps microseconds, so a value from the real clock
   would not compare equal after a round trip.
+- API tests authenticate with access tokens signed by a stand-in tenant (`TestTokens`), which the
+  API trusts instead of Auth0. `BucklApiFactory.CreateClientFor(subject)` returns a client that
+  sends a valid token for that subject; `TestTokens.Issue(new TestToken { ... })` builds the
+  invalid ones, changing one property of a valid token. Token lifetimes use the real clock,
+  because the JWT handler does.
 
 ## The front-end cycle
 
