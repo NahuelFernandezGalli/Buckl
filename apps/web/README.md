@@ -2,6 +2,10 @@
 
 React + Vite + TypeScript front end of Buckl, packaged as a PWA.
 
+Before the first `npm run dev`, copy `.env.example` to `.env.local` and fill in the Auth0 tenant,
+the client id of the "Buckl Web" application and the API address. Every variable is described in
+[`docs/configuration.md`](../../docs/configuration.md).
+
 Run from the repository root with the workspace scripts (`npm run dev -w web`, `npm run test -w
 web`) or from this directory with `npm run dev`, `npm run test`, `npm run build`.
 
