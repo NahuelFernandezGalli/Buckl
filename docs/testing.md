@@ -144,6 +144,12 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
 `loadFeature` takes a path relative to the steps file, starting with `./`. `renderApp` mounts the
 real routes in a memory router, with the repositories the scenario seeds.
 
+`renderApp` signs in as Alice unless a scenario passes `session: fakeSession({ status: 'signedOut' })`
+or another state. `fakeSession` records what screens ask of it in plain fields (`signIns`,
+`signOuts.count`), not in `vi.fn()`: Vitest clears mock history before every test (`clearMocks` is
+on by default), and vitest-cucumber runs every step as its own test, so a `Then` would never see
+the calls made in its `When`. The same applies to any fake a scenario inspects.
+
 `vitest-cucumber` registers every step as its own Vitest test, so a global `afterEach(cleanup)`
 would unmount the screen between a `When` and its `Then`. Vitest runs without `globals` in this
 repository, so Testing Library does not clean up on its own; that is why each steps file declares
