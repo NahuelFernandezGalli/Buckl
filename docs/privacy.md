@@ -13,19 +13,19 @@ the same pull request as any change that adds, moves or removes personal data.
 
 ## Data inventory
 
-| Data                                                      | Where                        | Why                                                           | Retention                                                |
-| --------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
-| Email, name, login credentials, social identity           | Auth0                        | Sign-up and login                                             | Until account deletion                                   |
-| Auth0 subject (`sub`) and internal user id                | Neon (`users`)               | Link garments and outfits to their owner                      | Until account deletion                                   |
-| Garment classification, notes, status                     | Neon (`garments`)            | The wardrobe itself                                           | Until the user archives or deletes the garment           |
-| Purchase price, currency and date                         | Neon (`garments`)            | Show what was paid; imports fill it in                        | Until the garment is deleted                             |
-| Garment photos                                            | Cloudflare R2                | Show the garment                                              | Until the garment is deleted                             |
-| Product catalog data (brand, name, image URL, source URL) | Neon (`products`)            | Shared, impersonal reference                                  | Indefinite; not linked to a person                       |
-| Outfits and wear log _(phase 8)_                          | Neon                         | Suggestions and history                                       | Until account deletion                                   |
-| Product URLs shared for import _(phase 7)_                | Neon (`products.source_url`) | Re-open the product page                                      | Indefinite; the URL is public                            |
-| Purchase confirmation emails _(phase 7)_                  | Not stored                   | Parsed in memory to extract items; the raw email is discarded | None                                                     |
-| Access tokens                                             | Browser memory               | Call the API                                                  | Token lifetime; never in the database                    |
-| Server logs                                               | API host                     | Operate the service                                           | Short; no personal data, no tokens, correlation ids only |
+| Data                                                      | Where                        | Why                                                                                                    | Retention                                                |
+| --------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| Email, name, login credentials, social identity           | Auth0                        | Sign-up and login                                                                                      | Until account deletion                                   |
+| Auth0 subject (`sub`), internal user id and creation time | Neon (`users`)               | Link garments and outfits to their owner; nothing else from the token (name, email, picture) is stored | Until account deletion                                   |
+| Garment classification, notes, status                     | Neon (`garments`)            | The wardrobe itself                                                                                    | Until the user archives or deletes the garment           |
+| Purchase price, currency and date                         | Neon (`garments`)            | Show what was paid; imports fill it in                                                                 | Until the garment is deleted                             |
+| Garment photos                                            | Cloudflare R2                | Show the garment                                                                                       | Until the garment is deleted                             |
+| Product catalog data (brand, name, image URL, source URL) | Neon (`products`)            | Shared, impersonal reference                                                                           | Indefinite; not linked to a person                       |
+| Outfits and wear log _(phase 8)_                          | Neon                         | Suggestions and history                                                                                | Until account deletion                                   |
+| Product URLs shared for import _(phase 7)_                | Neon (`products.source_url`) | Re-open the product page                                                                               | Indefinite; the URL is public                            |
+| Purchase confirmation emails _(phase 7)_                  | Not stored                   | Parsed in memory to extract items; the raw email is discarded                                          | None                                                     |
+| Access tokens                                             | Browser memory               | Call the API                                                                                           | Token lifetime; never in the database                    |
+| Server logs                                               | API host                     | Operate the service                                                                                    | Short; no personal data, no tokens, correlation ids only |
 
 Buckl does not use analytics, advertising identifiers or third-party tracking scripts.
 
@@ -64,6 +64,7 @@ owner. Client-side compression in phase 6 reduces resolution before upload.
 
 ## Changes
 
-| Date       | Change                                   |
-| ---------- | ---------------------------------------- |
-| 2026-09-07 | Initial version, before any data exists. |
+| Date       | Change                                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| 2026-09-07 | Initial version, before any data exists.                                                      |
+| 2026-09-25 | Phase 5: the API stores only the Auth0 subject of each user, from the validated access token. |
