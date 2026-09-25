@@ -2,6 +2,7 @@ using Buckl.Api.Authentication;
 using Buckl.Api.Errors;
 using Buckl.Api.Filters;
 using Buckl.Api.Json;
+using Buckl.Api.OpenApi;
 using Buckl.Application;
 using Buckl.Infrastructure;
 using Scalar.AspNetCore;
@@ -17,7 +18,7 @@ builder.Services
     .AddControllers(options => options.Filters.Add<UserTransactionFilter>())
     .AddJsonOptions(options => BucklJson.Configure(options.JsonSerializerOptions));
 builder.Services.ConfigureHttpJsonOptions(options => BucklJson.Configure(options.SerializerOptions));
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
