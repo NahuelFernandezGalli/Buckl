@@ -133,6 +133,26 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
   })
 
   Scenario(
+    'a signed-in user coming back from Auth0 waits for the requested page',
+    ({ Given, When, Then }) => {
+      Given('Alice is signed in', aliceSignedIn)
+      When('Auth0 sends the visitor back to the app', open('/callback?code=abc&state=xyz'))
+      Then('a message says the sign-in is being completed', () => {
+        expect(screen.getByRole('status')).toHaveTextContent('Signing you in…')
+      })
+    },
+  )
+
+  Scenario(
+    'someone who opens the sign-in callback by hand while signed in goes to the wardrobe',
+    ({ Given, When, Then }) => {
+      Given('Alice is signed in', aliceSignedIn)
+      When("she opens the sign-in callback address without Auth0's answer", open('/callback'))
+      Then('the wardrobe is shown', wardrobeShown)
+    },
+  )
+
+  Scenario(
     'a sign-in that failed at Auth0 comes back to the welcome screen',
     ({ Given, When, Then }) => {
       Given('the last sign-in attempt failed', failedSignIn)
