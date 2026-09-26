@@ -50,6 +50,16 @@ Feature: Signing in and out
     When Auth0 sends the visitor back to the app
     Then a message says the sign-in is being completed
 
+  Scenario: a signed-in user coming back from Auth0 waits for the requested page
+    Given Alice is signed in
+    When Auth0 sends the visitor back to the app
+    Then a message says the sign-in is being completed
+
+  Scenario: someone who opens the sign-in callback by hand while signed in goes to the wardrobe
+    Given Alice is signed in
+    When she opens the sign-in callback address without Auth0's answer
+    Then the wardrobe is shown
+
   Scenario: a sign-in that failed at Auth0 comes back to the welcome screen
     Given the last sign-in attempt failed
     When Auth0 sends the visitor back to the app
