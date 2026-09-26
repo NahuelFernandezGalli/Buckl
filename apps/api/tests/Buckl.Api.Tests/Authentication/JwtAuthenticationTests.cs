@@ -1,5 +1,6 @@
 using System.Net;
 using Buckl.Api.Authentication;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Buckl.Api.Tests.Authentication;
 
@@ -45,6 +46,7 @@ public class JwtAuthenticationTests
     [InlineData("another issuer")]
     [InlineData("another audience")]
     [InlineData("signed with a foreign key")]
+    [InlineData("signed with another algorithm")]
     [InlineData("unsigned")]
     [InlineData("without subject")]
     [InlineData("with a subject over the limit")]
@@ -85,6 +87,8 @@ public class JwtAuthenticationTests
         "another issuer" => TestTokens.Issue(new TestToken { Issuer = "https://evil.example/" }),
         "another audience" => TestTokens.Issue(new TestToken { Audience = "https://api.other.example" }),
         "signed with a foreign key" => TestTokens.Issue(new TestToken { Key = TestTokens.ForeignKey }),
+        "signed with another algorithm" => TestTokens.Issue(
+            new TestToken { Algorithm = SecurityAlgorithms.RsaSha512 }),
         "unsigned" => TestTokens.Issue(new TestToken { Key = null }),
         "without subject" => TestTokens.Issue(new TestToken { Subject = null }),
         "with a subject over the limit" => TestTokens.Issue(new TestToken

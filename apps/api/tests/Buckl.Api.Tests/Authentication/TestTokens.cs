@@ -46,7 +46,7 @@ internal static class TestTokens
             Expires = token.Expires,
             SigningCredentials = token.Key is null
                 ? null
-                : new SigningCredentials(token.Key, SecurityAlgorithms.RsaSha256),
+                : new SigningCredentials(token.Key, token.Algorithm),
         };
 
         return new JsonWebTokenHandler { SetDefaultTimesOnTokenCreation = false }.CreateToken(descriptor);
@@ -78,4 +78,6 @@ internal sealed record TestToken
 
     /// <summary><c>null</c> issues an unsigned token (<c>alg: none</c>).</summary>
     public SecurityKey? Key { get; init; } = TestTokens.SigningKey;
+
+    public string Algorithm { get; init; } = SecurityAlgorithms.RsaSha256;
 }
