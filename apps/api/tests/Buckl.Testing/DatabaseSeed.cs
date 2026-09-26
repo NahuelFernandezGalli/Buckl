@@ -126,6 +126,20 @@ public static class DatabaseSeed
         return ids;
     }
 
+    public static async Task<Guid?> ReadGarmentOwnerAsync(
+        this PostgresDatabase database,
+        GarmentId id,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+
+        await using var connection = await database.OpenOwnerConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("select user_id from garments where id = $1", connection);
+        command.Parameters.Add(Parameter(id.Value));
+
+        return await command.ExecuteScalarAsync(cancellationToken) as Guid?;
+    }
+
     private static async Task<bool> ExistsAsync(
         PostgresDatabase database,
         string sql,
