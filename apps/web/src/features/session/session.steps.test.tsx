@@ -153,6 +153,18 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
   )
 
   Scenario(
+    'a signed-in user who opens the callback with an error but no state goes to the wardrobe',
+    ({ Given, When, Then }) => {
+      Given('Alice is signed in', aliceSignedIn)
+      When(
+        'she opens the sign-in callback address with an error the SDK will not pair with a state',
+        open('/callback?error=access_denied'),
+      )
+      Then('the wardrobe is shown', wardrobeShown)
+    },
+  )
+
+  Scenario(
     'a sign-in that failed at Auth0 comes back to the welcome screen',
     ({ Given, When, Then }) => {
       Given('the last sign-in attempt failed', failedSignIn)

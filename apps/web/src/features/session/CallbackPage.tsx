@@ -24,8 +24,12 @@ export function CallbackPage() {
   return <p role="status">Signing you in…</p>
 }
 
-/** Auth0 answers `/callback` with `code`/`state` on success or `error`/`state` on cancellation. */
+/**
+ * Auth0 answers `/callback` with `code`/`state` on success or `error`/`state` on cancellation.
+ * auth0-react only processes the callback when `state` is present together with `code` or
+ * `error`; any other combination is not an answer it will handle, so it must not hold this page.
+ */
 function carriesAuth0Answer(search: string): boolean {
   const params = new URLSearchParams(search)
-  return params.has('code') || params.has('state') || params.has('error')
+  return params.has('state') && (params.has('code') || params.has('error'))
 }
