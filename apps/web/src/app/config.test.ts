@@ -50,4 +50,17 @@ describe('readAppConfig', () => {
       /VITE_API_BASE_URL must be an http or https URL/,
     )
   })
+
+  it('rejects a plain http API base URL for a non-local host', () => {
+    expect(() => readAppConfig({ ...complete, VITE_API_BASE_URL: 'http://api.buckl.app' })).toThrow(
+      /VITE_API_BASE_URL must use https/,
+    )
+  })
+
+  it.each(['http://localhost:5080', 'http://127.0.0.1:5080', 'https://api.buckl.app'])(
+    'accepts %s as the API base URL',
+    (url) => {
+      expect(() => readAppConfig({ ...complete, VITE_API_BASE_URL: url })).not.toThrow()
+    },
+  )
 })
