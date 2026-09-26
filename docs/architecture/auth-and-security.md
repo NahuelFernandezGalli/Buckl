@@ -88,8 +88,11 @@ sequenceDiagram
    `SET LOCAL app.user_id`, before any query. A global MVC action filter opens that transaction
    and commits it only if the action succeeded. `SET LOCAL` dies with the transaction, so a
    pooled connection never carries a stale user into the next request.
-6. Integration tests in phases 4 and 5 prove that two users cannot read or modify each other's
-   rows, including attempts by id.
+6. Integration tests prove that two users cannot read or modify each other's rows, including
+   attempts by id: at the database level as the application role (`RowLevelSecurityTests`), and
+   end to end with signed access tokens through the production authentication
+   (`MultiUserIsolationTests`), where the owner of a garment always comes from the token and never
+   from the request body.
 
 The full DDL, roles and grants are in [Database schema](database-schema.md).
 
