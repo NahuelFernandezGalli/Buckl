@@ -49,8 +49,14 @@ export function readAppConfig(source: ConfigSource): AppConfig {
   if (domain && !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(domain)) {
     problems.push(`${variables.domain} must be a host name without https:// or slashes`)
   }
-  if (apiBaseUrl && !isHttpUrl(apiBaseUrl)) {
-    problems.push(`${variables.apiBaseUrl} must be an http or https URL`)
+  if (apiBaseUrl) {
+    if (!isHttpUrl(apiBaseUrl)) {
+      problems.push(`${variables.apiBaseUrl} must be an http or https URL`)
+    } else if (!isSecureOrLocal(apiBaseUrl)) {
+      problems.push(
+        `${variables.apiBaseUrl} must use https unless the host is localhost, 127.0.0.1 or [::1]`,
+      )
+    }
   }
   if (problems.length > 0) throw new ConfigError(problems)
 
@@ -64,4 +70,12 @@ function isHttpUrl(value: string): boolean {
   } catch {
     return false
   }
+}
+
+/** A production build pointed at a plain http API would send bearer tokens in the clear. */
+const localApiHosts = new Set(['localhost', '127.0.0.1', '::1'])
+
+function isSecureOrLocal(value: string): boolean {
+  const url = new URL(value)
+  return url.protocol === 'https:' || localApiHosts.has(url.hostname)
 }

@@ -59,8 +59,9 @@ sequenceDiagram
 
 - The SDK caches the access, refresh and ID tokens in local storage and renews access tokens with
   rotating refresh tokens ([ADR-0030](../adr/0030-keep-the-web-session-with-rotating-refresh-tokens.md)).
-  Access tokens last one hour; refresh tokens 15 days without use and 30 days at most, and a
-  replayed one revokes the whole family.
+  Access tokens last one hour; refresh tokens stop signing anyone in after 15 days without use and
+  30 days at most, and a replayed one revokes the whole family. Expiry only affects sign-in: the
+  cached tokens, including the ID token's name and email, stay in local storage until logout.
 - After a login, the app only navigates to paths inside itself (`safeReturnTo`), never to an
   address carried in the login state.
 
@@ -139,9 +140,11 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
   `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
   `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` (except the development
   API reference, an HTML page), and `Cache-Control: no-store` unless the endpoint set its own.
-- Outside Development, HTTPS responses carry `Strict-Transport-Security: max-age=31536000`. Behind
-  a proxy that terminates TLS, the API only sees HTTPS once forwarded headers are configured
-  (phase 9).
+- Outside Development, successful HTTPS responses carry
+  `Strict-Transport-Security: max-age=31536000` (error responses written by the exception handler
+  do not; browsers keep HSTS from any earlier response, and phase 9 moves it next to the other
+  headers). Behind a proxy that terminates TLS, the API only sees HTTPS once forwarded headers are
+  configured (phase 9).
 - Kestrel does not send a `Server` header.
 - Rate limiting on import and upload endpoints comes in phase 10.
 

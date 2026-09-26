@@ -71,6 +71,19 @@ public class CorsTests
         Assert.Contains("Location", Single(response, "Access-Control-Expose-Headers"), StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task An_unauthenticated_error_response_stays_readable_by_the_web_app()
+    {
+        using var client = _api.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, Http.Url("/garments"));
+        request.Headers.Add("Origin", WebApp);
+
+        using var response = await client.SendAsync(request, Ct);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(WebApp, Single(response, "Access-Control-Allow-Origin"));
+    }
+
     private static HttpRequestMessage Preflight(string origin, string method, string headers)
     {
         var request = new HttpRequestMessage(HttpMethod.Options, Http.Url("/garments"));

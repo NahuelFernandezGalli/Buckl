@@ -44,4 +44,6 @@ the SDK. In Auth0, refresh token rotation is on with reuse detection, refresh to
 - Any script running on Buckl's origin can read the tokens, so a cross-site scripting bug means
   token theft. Buckl loads no third-party scripts, React escapes output, and the static host gets
   a strict content security policy in phase 9.
-- Tokens stay in the browser until logout or expiry, including on a shared computer.
+- Tokens stay in the browser until logout: expiry only stops them from signing anyone in, it does
+  not remove them, so the cached profile (name and email, from the ID token) stays readable until
+  logout, including on a shared computer.

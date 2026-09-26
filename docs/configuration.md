@@ -11,12 +11,12 @@ of them is public. Locally they come from `apps/web/.env.local` (copy
 [`apps/web/.env.example`](../apps/web/.env.example)); when hosted (phase 9), from the static
 host's build settings.
 
-| Variable               | Example                  | Purpose                                               |
-| ---------------------- | ------------------------ | ----------------------------------------------------- |
-| `VITE_AUTH0_DOMAIN`    | `buckl-dev.us.auth0.com` | Auth0 tenant, without `https://`                      |
-| `VITE_AUTH0_CLIENT_ID` | `<client id>`            | The "Buckl Web" single-page application               |
-| `VITE_AUTH0_AUDIENCE`  | `https://api.buckl.app`  | Identifier of the "Buckl API"; access tokens carry it |
-| `VITE_API_BASE_URL`    | `http://localhost:5080`  | Where the API listens                                 |
+| Variable               | Example                  | Purpose                                                                                  |
+| ---------------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
+| `VITE_AUTH0_DOMAIN`    | `buckl-dev.us.auth0.com` | Auth0 tenant, without `https://`                                                         |
+| `VITE_AUTH0_CLIENT_ID` | `<client id>`            | The "Buckl Web" single-page application                                                  |
+| `VITE_AUTH0_AUDIENCE`  | `https://api.buckl.app`  | Identifier of the "Buckl API"; access tokens carry it                                    |
+| `VITE_API_BASE_URL`    | `http://localhost:5080`  | Where the API listens; `https://` unless the host is `localhost`, `127.0.0.1` or `[::1]` |
 
 The app checks them when it starts (`src/app/config.ts`) and stops with a message that names every
 missing or malformed variable. Tests never read them.
