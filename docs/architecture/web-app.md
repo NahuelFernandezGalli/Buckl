@@ -25,12 +25,19 @@ with `createMemoryRouter` through `renderApp({ route })`.
 
 | Path                                          | Screen                                                                                             |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `/welcome`                                    | Welcome screen with "Log in"; public. A signed-in user is sent on to the wardrobe                  |
+| `/callback`                                   | Where Auth0 returns after a login; public. Shows "Signing you in…" while the SDK finishes          |
 | `/`                                           | Redirects to `/wardrobe`                                                                           |
 | `/wardrobe?category=&color=&size=&q=&status=` | Wardrobe list; every filter is a query parameter so the address is shareable and survives a reload |
 | `/wardrobe/:garmentId`                        | Garment detail                                                                                     |
 | `/wardrobe/:garmentId/edit`                   | Garment edit                                                                                       |
 | `/garments/new`                               | Add garment                                                                                        |
 | `*`                                           | Not found                                                                                          |
+
+Every other route sits under the `RequireSession` layout route: while the session loads it shows a
+loading message, and a signed-out visitor is sent to `/welcome`, which remembers the address they
+asked for and returns to it after the login. The header shows the signed-in user's name and a "Log
+out" button.
 
 The shell (`AppLayout`) renders a header, a main navigation (bottom bar on phones, sidebar from
 768px) and the active page in an `Outlet`. Every page sets the document title with
