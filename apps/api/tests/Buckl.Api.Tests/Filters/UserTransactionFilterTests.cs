@@ -33,6 +33,33 @@ public class UserTransactionFilterTests
     }
 
     [Fact]
+    public async Task The_subject_of_the_access_token_becomes_exactly_one_local_user()
+    {
+        var subject = Subjects.New();
+        using var client = _api.CreateClientFor(subject);
+
+        var first = await client.GetFromJsonAsync<SessionProbe>(SessionProbeUrl, Ct);
+        var second = await client.GetFromJsonAsync<SessionProbe>(SessionProbeUrl, Ct);
+
+        var stored = Assert.Single(await _api.Database.ReadUserIdsBySubjectAsync(subject, Ct));
+        Assert.Equal(stored, first!.UserId);
+        Assert.Equal(stored, second!.UserId);
+    }
+
+    [Fact]
+    public async Task Concurrent_first_requests_of_a_subject_share_one_local_user()
+    {
+        var subject = Subjects.New();
+        using var client = _api.CreateClientFor(subject);
+
+        var sessions = await Task.WhenAll(Enumerable.Range(0, 8)
+            .Select(_ => client.GetFromJsonAsync<SessionProbe>(SessionProbeUrl, Ct)));
+
+        var stored = Assert.Single(await _api.Database.ReadUserIdsBySubjectAsync(subject, Ct));
+        Assert.All(sessions, session => Assert.Equal(stored, session!.UserId));
+    }
+
+    [Fact]
     public async Task Two_subjects_run_as_two_different_users()
     {
         using var alice = _api.CreateClientFor(Subjects.New());
