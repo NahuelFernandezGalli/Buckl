@@ -3,8 +3,23 @@
 Your closet, digitized, upload once, dress smarter.
 
 Buckl is a personal wardrobe app: photograph or import the clothes you own, browse them from your
-phone or the browser, and get help deciding what to wear. It is a portfolio project built with
-React (PWA) and a .NET API on Postgres.
+phone or the browser, and get help deciding what to wear. It is built with React (PWA) and a .NET
+API on Postgres.
+
+> **Portfolio project.** Buckl is a personal project by
+> [Nahuel Fernández Galli](https://github.com/NahuelFernandezGalli), built to show how I design,
+> test and document a full-stack application. It is not a commercial product.
+
+## How this project is built
+
+Buckl is built with [Claude Code](https://claude.com/claude-code) as a pair programmer:
+
+- **Planning:** each phase starts as a written plan, split into pull requests of a few hundred lines.
+- **Implementation:** code is written test-first (TDD for the domain, BDD scenarios for the web app).
+- **Review:** every pull request is reviewed before merge, and the whole phase gets a final review.
+- **Decisions:** architecture choices are mine and are recorded as ADRs in [`docs/adr`](docs/adr/README.md).
+
+The repository shows the result: working code, tests, and the documentation that explains why.
 
 ## Documentation
 
@@ -36,13 +51,16 @@ npm run test
 npm run build
 ```
 
-API (domain only until phase 4):
+API, from `apps/api` (the SDK reads `apps/api/global.json` from the current directory):
 
 ```bash
-dotnet build apps/api
-dotnet test apps/api
-dotnet format apps/api --verify-no-changes
+dotnet build
+dotnet test
+dotnet format --verify-no-changes
 ```
+
+Both apps read their settings from outside the repository; see
+[`docs/configuration.md`](docs/configuration.md).
 
 Commits follow Conventional Commits and are checked by local hooks and CI. Feature branches are
 merged into `develop`; `develop` is merged into `main` at the end of each phase.

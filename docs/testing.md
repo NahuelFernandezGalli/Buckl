@@ -62,6 +62,11 @@ tests are about.
   looks at those.
 - Timestamps come from `TestClock`; Postgres keeps microseconds, so a value from the real clock
   would not compare equal after a round trip.
+- API tests authenticate with access tokens signed by a stand-in tenant (`TestTokens`), which the
+  API trusts instead of Auth0. `BucklApiFactory.CreateClientFor(subject)` returns a client that
+  sends a valid token for that subject; `TestTokens.Issue(new TestToken { ... })` builds the
+  invalid ones, changing one property of a valid token. Token lifetimes use the real clock,
+  because the JWT handler does.
 
 ## The front-end cycle
 
@@ -138,6 +143,12 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
 
 `loadFeature` takes a path relative to the steps file, starting with `./`. `renderApp` mounts the
 real routes in a memory router, with the repositories the scenario seeds.
+
+`renderApp` signs in as Alice unless a scenario passes `session: fakeSession({ status: 'signedOut' })`
+or another state. `fakeSession` records what screens ask of it in plain fields (`signIns`,
+`signOuts.count`), not in `vi.fn()`: Vitest clears mock history before every test (`clearMocks` is
+on by default), and vitest-cucumber runs every step as its own test, so a `Then` would never see
+the calls made in its `When`. The same applies to any fake a scenario inspects.
 
 `vitest-cucumber` registers every step as its own Vitest test, so a global `afterEach(cleanup)`
 would unmount the screen between a `When` and its `Then`. Vitest runs without `globals` in this

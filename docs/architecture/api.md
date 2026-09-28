@@ -84,23 +84,39 @@ use of a pooled connection.
 
 ## Authentication
 
-Every endpoint requires an authenticated user unless it opts out explicitly. Until phase 5 the
-only scheme is `Development`
-([ADR-0026](../adr/0026-authenticate-with-a-development-scheme-until-auth0.md)): the
-`X-Dev-User: <subject>` header authenticates the request as that subject, and the API refuses to
-start outside the Development environment. The subject travels as the `sub` claim, as it will in
-Auth0 access tokens. `IUserProvisioning` maps it to the local user id, creating the `users` row
-the first time.
+Every endpoint requires a valid Auth0 access token unless it opts out explicitly
+([ADR-0028](../adr/0028-validate-auth0-access-tokens-with-jwt-bearer.md)).
+`AddBucklAuthentication` registers ASP.NET Core's JWT bearer handler for the tenant in
+`Auth0:Domain` and the API identifier in `Auth0:Audience`. Both settings are required in every
+environment and validated when the host starts, so a missing or malformed value stops the API.
+
+- Tokens must be RS256, signed by a key of the tenant's JWKS (downloaded from
+  `https://<domain>/.well-known/openid-configuration` on the first authenticated request, cached
+  and refreshed on rotation), issued by `https://<domain>/` for the configured audience, and within
+  their lifetime (five minutes of clock skew).
+- Claim names are kept as issued (`MapInboundClaims = false`): the subject is `sub`.
+- A token without a subject, or with one longer than 255 characters, is rejected.
+- A missing or invalid token gets `401` with `WWW-Authenticate: Bearer` and code
+  `request.unauthenticated`. A policy beyond authentication that fails (none today) gets `403`
+  with `request.forbidden`.
+
+`IUserProvisioning` maps `sub` to the local user id, creating the `users` row the first time.
+
+Tests host the API with a stand-in tenant (`TestTokens` in `Buckl.Api.Tests`): a signing key
+generated per test run and its OpenID configuration, set as the handler's static metadata. The
+validation code is the production one; only the source of the keys changes.
 
 ## Request pipeline
 
-1. Exception handler and status code pages, so every error leaves as problem details (PR 4.13).
-2. Authentication (`Development` scheme until phase 5) and authorization (authenticated by
-   default).
-3. `UserTransactionFilter`, a global MVC action filter: it maps the `sub` claim to the local user
+1. Security headers, added when the response starts so errors carry them too; HSTS outside
+   Development.
+2. Exception handler and status code pages, so every error leaves as problem details.
+3. CORS for the web app's origins; a preflight is answered here, before authentication.
+4. Authentication (JWT bearer, Auth0 access tokens) and authorization (authenticated by default).
+5. `UserTransactionFilter`, a global MVC action filter: it maps the `sub` claim to the local user
    through `IUserProvisioning`, binds `ICurrentUser`, and opens the user-scoped transaction.
-4. The controller action calls one handler; handlers save through `IUnitOfWork`.
-5. Back in the filter, the transaction commits if the action completed, and rolls back if it
+6. The controller action calls one handler; handlers save through `IUnitOfWork`.
+7. Back in the filter, the transaction commits if the action completed, and rolls back if it
    threw.
 
 The health endpoint is not an MVC action, so it never opens a transaction.
@@ -111,18 +127,21 @@ The contract mirrors the web app's repository ports (`apps/web/src/domain`), so 
 in-memory repository for HTTP without touching screens. JSON is camel case, enumerations are
 lower-case strings, dates are `YYYY-MM-DD`, and timestamps are ISO 8601 in UTC.
 
-| Method and path               | Purpose                                              | Success          |
-| ----------------------------- | ---------------------------------------------------- | ---------------- |
-| `GET /health`                 | Liveness probe (anonymous)                           | 200              |
-| `GET /garments`               | Wardrobe: `?category=&color=&size=&q=&status=`       | 200              |
-| `GET /garments/{id}`          | One garment                                          | 200              |
-| `GET /products/{id}`          | One catalog product                                  | 200              |
-| `POST /garments`              | Add a garment by hand                                | 201 + `Location` |
-| `PATCH /garments/{id}`        | Partial edit: absent fields untouched, `null` clears | 200              |
-| `POST /garments/{id}/archive` | Archive                                              | 200              |
-| `POST /garments/{id}/restore` | Restore                                              | 200              |
-| `GET /openapi/v1.json`        | OpenAPI document (Development, anonymous)            | 200              |
-| `GET /scalar/v1`              | API reference UI (Development, anonymous)            | 200              |
+| Method and path               | Purpose                                                                | Success          |
+| ----------------------------- | ---------------------------------------------------------------------- | ---------------- |
+| `GET /health`                 | Liveness probe (anonymous)                                             | 200              |
+| `GET /garments`               | Wardrobe: `?category=&color=&size=&q=&status=`                         | 200              |
+| `GET /garments/{id}`          | One garment                                                            | 200              |
+| `GET /products/{id}`          | One catalog product                                                    | 200              |
+| `POST /garments`              | Add a garment by hand                                                  | 201 + `Location` |
+| `PATCH /garments/{id}`        | Partial edit: absent fields untouched, `null` clears                   | 200              |
+| `POST /garments/{id}/archive` | Archive                                                                | 200              |
+| `POST /garments/{id}/restore` | Restore                                                                | 200              |
+| `GET /openapi/v1.json`        | OpenAPI document with the bearer token scheme (Development, anonymous) | 200              |
+| `GET /scalar/v1`              | API reference UI (Development, anonymous)                              | 200              |
+
+The OpenAPI document declares the bearer token as a security requirement of every operation, so
+the API reference at `/scalar/v1` can send one.
 
 `photoUrl` is always `null` until phase 6 attaches photos. Lists are not paginated in v1.
 

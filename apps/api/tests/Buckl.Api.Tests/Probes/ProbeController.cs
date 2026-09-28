@@ -3,6 +3,7 @@ using Buckl.Application.Abstractions;
 using Buckl.Infrastructure.Persistence;
 using Buckl.Infrastructure.Persistence.Records;
 using Buckl.Testing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -16,6 +17,12 @@ public sealed class ProbeController : ControllerBase
 {
     [HttpGet("subject")]
     public ActionResult<string> Subject() => User.FindFirst(BucklClaims.Subject)?.Value ?? string.Empty;
+
+    /// <summary>Requires a role no test user has, to observe the answer to an authenticated caller
+    /// that is not allowed.</summary>
+    [HttpGet("forbidden")]
+    [Authorize(Roles = "nobody")]
+    public IActionResult Forbidden() => NoContent();
 
     /// <summary>The user the request is bound to, and the session variable the policies read.</summary>
     [HttpGet("session")]

@@ -1,25 +1,22 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Buckl.Api.Tests;
 
-public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly BucklApiFactory _api;
 
-    public HealthEndpointTests(WebApplicationFactory<Program> factory)
+    public HealthEndpointTests(BucklApiFactory api)
     {
-        _factory = factory;
+        _api = api;
     }
 
     [Fact]
     public async Task Get_health_returns_200_without_authentication()
     {
-        using var client = _factory.CreateClient();
+        using var client = _api.CreateClient();
 
-        using var response = await client.GetAsync(
-            new Uri("/health", UriKind.Relative),
-            TestContext.Current.CancellationToken);
+        using var response = await client.GetAsync(Http.Url("/health"), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

@@ -44,16 +44,26 @@ sequenceDiagram
 - A missing or invalid token yields `401`. A valid token that targets another user's resource
   yields `404`, so the API never leaks the existence of other users' rows.
 - Tokens are validated against Auth0's JWKS, cached and refreshed on key rotation.
-- Until phase 5 the API uses a development-only scheme instead: the `X-Dev-User` header names the
-  subject ([ADR-0026](../adr/0026-authenticate-with-a-development-scheme-until-auth0.md)). It is
-  registered only in the Development environment, and the API does not start anywhere else.
+- Only RS256 tokens are accepted, with the subject kept as `sub`; a token without a usable
+  subject is rejected. The settings and the details are in [API](api.md#authentication)
+  ([ADR-0028](../adr/0028-validate-auth0-access-tokens-with-jwt-bearer.md)).
 
 ### Local user record
 
 - On every authenticated request the API upserts a row in `users` keyed by the token's `sub`
-  claim (a development subject in phase 4) and binds the resulting local id to the request. The
-  generated `users.id` (UUID) is what the rest of the system uses as `UserId`.
+  claim and binds the resulting local id to the request. The generated `users.id` (UUID) is what
+  the rest of the system uses as `UserId`.
 - The API stores nothing else from the token in v1. Display name and email stay in Auth0.
+
+### Session in the web app
+
+- The SDK caches the access, refresh and ID tokens in local storage and renews access tokens with
+  rotating refresh tokens ([ADR-0030](../adr/0030-keep-the-web-session-with-rotating-refresh-tokens.md)).
+  Access tokens last one hour; refresh tokens stop signing anyone in after 15 days without use and
+  30 days at most, and a replayed one revokes the whole family. Expiry only affects sign-in: the
+  cached tokens, including the ID token's name and email, stay in local storage until logout.
+- After a login, the app only navigates to paths inside itself (`safeReturnTo`), never to an
+  address carried in the login state.
 
 ## Data isolation with Row-Level Security
 
@@ -79,15 +89,28 @@ sequenceDiagram
    `SET LOCAL app.user_id`, before any query. A global MVC action filter opens that transaction
    and commits it only if the action succeeded. `SET LOCAL` dies with the transaction, so a
    pooled connection never carries a stale user into the next request.
-6. Integration tests in phases 4 and 5 prove that two users cannot read or modify each other's
-   rows, including attempts by id.
+6. Integration tests prove that two users cannot read or modify each other's rows, including
+   attempts by id: at the database level as the application role (`RowLevelSecurityTests`), and
+   end to end with signed access tokens through the production authentication
+   (`MultiUserIsolationTests`), where the owner of a garment always comes from the token and never
+   from the request body.
 
 The full DDL, roles and grants are in [Database schema](database-schema.md).
 
 ## CORS
 
-- The API allows only the web app's origins, from configuration: `http://localhost:5173` in
-  development and the production origin from phase 9.
+- The API allows only the web app's origins, from `Cors:AllowedOrigins`: `http://localhost:5173`
+  (Vite dev server) and `http://localhost:4173` (Vite preview) in Development, the production
+  origin from phase 9. An empty list allows no cross-origin call.
+- Every entry must be an origin (scheme, host, optional port; no path, no trailing slash, no
+  wildcard). The API refuses to start otherwise, because a browser never sends
+  `https://buckl.app/` and the mismatch would silently cut the web app off.
+- Allowed methods are `GET`, `POST` and `PATCH`; allowed request headers, `Authorization` and
+  `Content-Type`. `Location` is exposed so the web app can read where a new garment lives.
+  Credentials (cookies) are not allowed: the token travels in `Authorization`. Browsers may cache a
+  preflight for ten minutes.
+- CORS runs before authentication, so a preflight, which never carries a token, is answered
+  without being challenged.
 - CORS is a browser-side protection, complementary to authentication. It is not an access control:
   every request still needs a valid token.
 
@@ -95,10 +118,12 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 
 - The web bundle is public. It contains only public configuration: Auth0 domain, client id,
   audience and the API base URL, as `VITE_` variables.
-- Real secrets (database connection string, R2 access keys, migration role password) live only in
-  the API, read from environment variables. `.env` files are ignored by git; `.env.example` files
-  document the variable names without values, added in phase 5.
-- CI runs gitleaks on every pull request and weekly. A leaked secret is rotated, not just removed.
+- Real secrets (database connection strings, R2 access keys from phase 6) live only in the API's
+  environment: user secrets locally, the host's secret store when deployed. `.env` files are
+  ignored by git; `.env.example` files document the names without values.
+- Every variable, where it comes from and whether it is secret: [Configuration](../configuration.md).
+- CI runs gitleaks on every pull request and weekly, and GitHub push protection blocks known
+  secret formats. A leaked secret is rotated, not just removed.
 
 ## Photos
 
@@ -111,17 +136,28 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 ## Transport and headers
 
 - HTTPS everywhere in production; the static host and the API host provide certificates.
-- Security headers on API responses (HSTS, `X-Content-Type-Options: nosniff`, a restrictive
-  `Referrer-Policy`) are added in phase 5. Rate limiting on import and upload endpoints comes in
-  phase 10.
+- Every API response, errors included, carries `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
+  `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` (except the development
+  API reference, an HTML page), and `Cache-Control: no-store` unless the endpoint set its own.
+- Outside Development, successful HTTPS responses carry
+  `Strict-Transport-Security: max-age=31536000` (error responses written by the exception handler
+  do not; browsers keep HSTS from any earlier response, and phase 9 moves it next to the other
+  headers). Behind a proxy that terminates TLS, the API only sees HTTPS once forwarded headers are
+  configured (phase 9).
+- Kestrel does not send a `Server` header.
+- Rate limiting on import and upload endpoints comes in phase 10.
 
 ## Threats considered
 
-| Threat                                    | Mitigation                                                         |
-| ----------------------------------------- | ------------------------------------------------------------------ |
-| Bug in a query forgets to filter by user  | RLS policy filters anyway; a missing `app.user_id` means no rows   |
-| Stolen or forged token                    | Signature, issuer, audience and expiry validation; short lifetime  |
-| Guessing another user's garment id        | RLS returns nothing and the API answers `404`                      |
-| Credentials in the front-end bundle       | No secrets in the web app; presigned URLs for storage              |
-| Secrets committed to git                  | gitleaks in CI, `.env` ignored, rotation on any leak               |
-| Malicious product URL on import (phase 7) | SSRF guard: http and https only, no private IPs, timeout, size cap |
+| Threat                                    | Mitigation                                                                                                                                           |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bug in a query forgets to filter by user  | RLS policy filters anyway; a missing `app.user_id` means no rows                                                                                     |
+| Stolen or forged token                    | Signature, issuer, audience and expiry validation; short lifetime                                                                                    |
+| Guessing another user's garment id        | RLS returns nothing and the API answers `404`                                                                                                        |
+| Credentials in the front-end bundle       | No secrets in the web app; presigned URLs for storage                                                                                                |
+| Secrets committed to git                  | gitleaks in CI, `.env` ignored, rotation on any leak                                                                                                 |
+| Malicious product URL on import (phase 7) | SSRF guard: http and https only, no private IPs, timeout, size cap                                                                                   |
+| Machine-to-machine token for the API      | No machine-to-machine application is authorized for the API                                                                                          |
+| Token stolen from local storage (XSS)     | No third-party scripts; React escaping; refresh token rotation with reuse detection; one-hour access tokens; strict CSP on the static host (phase 9) |
+| Open redirect after login                 | Only in-app paths are accepted as the destination (`safeReturnTo`)                                                                                   |

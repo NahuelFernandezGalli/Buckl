@@ -2,28 +2,41 @@ using Buckl.Api.Authentication;
 using Buckl.Api.Errors;
 using Buckl.Api.Filters;
 using Buckl.Api.Json;
+using Buckl.Api.OpenApi;
+using Buckl.Api.Security;
 using Buckl.Application;
 using Buckl.Infrastructure;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddBucklAuthentication(builder.Environment);
+builder.Services.AddBucklAuthentication(builder.Configuration);
+builder.Services.AddBucklSecurity(builder.Configuration);
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = ProblemCodes.AddDefaultCode);
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services
     .AddControllers(options => options.Filters.Add<UserTransactionFilter>())
     .AddJsonOptions(options => BucklJson.Configure(options.JsonSerializerOptions));
 builder.Services.ConfigureHttpJsonOptions(options => BucklJson.Configure(options.SerializerOptions));
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+app.UseSecurityHeaders();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

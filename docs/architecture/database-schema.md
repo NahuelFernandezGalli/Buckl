@@ -60,9 +60,8 @@ names below, and the value lists of enumeration constraints are generated from t
 
 ### users
 
-Created by the initial migration in phase 4. A row is added by the first authenticated request: a
-development subject in phase 4, the Auth0 `sub` claim from phase 5. It holds only what links a
-token to rows.
+Created by the initial migration in phase 4. A row is added by the first authenticated request,
+keyed by the `sub` claim of its Auth0 access token. It holds only what links a token to rows.
 
 ```sql
 create table users (
