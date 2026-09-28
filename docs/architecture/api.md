@@ -108,12 +108,15 @@ validation code is the production one; only the source of the keys changes.
 
 ## Request pipeline
 
-1. Exception handler and status code pages, so every error leaves as problem details (PR 4.13).
-2. Authentication (JWT bearer, Auth0 access tokens) and authorization (authenticated by default).
-3. `UserTransactionFilter`, a global MVC action filter: it maps the `sub` claim to the local user
+1. Security headers, added when the response starts so errors carry them too; HSTS outside
+   Development.
+2. Exception handler and status code pages, so every error leaves as problem details.
+3. CORS for the web app's origins; a preflight is answered here, before authentication.
+4. Authentication (JWT bearer, Auth0 access tokens) and authorization (authenticated by default).
+5. `UserTransactionFilter`, a global MVC action filter: it maps the `sub` claim to the local user
    through `IUserProvisioning`, binds `ICurrentUser`, and opens the user-scoped transaction.
-4. The controller action calls one handler; handlers save through `IUnitOfWork`.
-5. Back in the filter, the transaction commits if the action completed, and rolls back if it
+6. The controller action calls one handler; handlers save through `IUnitOfWork`.
+7. Back in the filter, the transaction commits if the action completed, and rolls back if it
    threw.
 
 The health endpoint is not an MVC action, so it never opens a transaction.

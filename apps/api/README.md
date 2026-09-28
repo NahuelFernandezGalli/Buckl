@@ -48,6 +48,8 @@ dotnet run --project src/Buckl.Api
 
 The API listens on `http://localhost:5080`. It refuses to start if the Auth0 settings are missing
 or malformed, and answers `401` to any request without a valid access token except `GET /health`.
+In Development it accepts browser calls from the web app at `http://localhost:5173` and
+`http://localhost:4173` (`appsettings.Development.json`).
 
 `src/Buckl.Api/Buckl.Api.http` walks through the whole flow for two users. It reads their access
 tokens from `src/Buckl.Api/.env`, which git ignores:
