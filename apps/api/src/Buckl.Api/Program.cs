@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddBucklAuthentication(builder.Environment);
+builder.Services.AddBucklAuthentication(builder.Configuration);
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = ProblemCodes.AddDefaultCode);
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services

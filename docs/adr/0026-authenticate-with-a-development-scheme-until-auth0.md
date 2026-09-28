@@ -1,6 +1,6 @@
 # ADR-0026: Authenticate with a development scheme until Auth0 arrives
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0028](0028-validate-auth0-access-tokens-with-jwt-bearer.md)
 - **Date:** 2026-09-22
 - **Deciders:** NahuelFernandezGalli
 

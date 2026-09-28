@@ -86,8 +86,8 @@ flowchart LR
   ([ADR-0025](../adr/0025-bind-each-request-to-one-user-scoped-transaction.md)), R2 storage
   adapter.
 - `Buckl.Api` exposes MVC controllers, maps errors to problem details with a stable `code`, runs
-  every action inside its user's transaction (a global action filter) and authenticates with a
-  development scheme until Auth0 replaces it in phase 5. The details are in [API](api.md).
+  every action inside its user's transaction (a global action filter) and authenticates Auth0
+  access tokens with JWT bearer. The details are in [API](api.md).
 - Architecture tests (phase 4) fail the build if a layer references one it must not.
 
 ## Repository layout
