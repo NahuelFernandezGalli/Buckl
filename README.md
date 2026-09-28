@@ -10,6 +10,17 @@ API on Postgres.
 > [Nahuel Fernández Galli](https://github.com/NahuelFernandezGalli), built to show how I design,
 > test and document a full-stack application. It is not a commercial product.
 
+## How this project is built
+
+Buckl is built with [Claude Code](https://claude.com/claude-code) as a pair programmer:
+
+- **Planning:** each phase starts as a written plan, split into pull requests of a few hundred lines.
+- **Implementation:** code is written test-first (TDD for the domain, BDD scenarios for the web app).
+- **Review:** every pull request is reviewed before merge, and the whole phase gets a final review.
+- **Decisions:** architecture choices are mine and are recorded as ADRs in [`docs/adr`](docs/adr/README.md).
+
+The repository shows the result: working code, tests, and the documentation that explains why.
+
 ## Documentation
 
 Everything about the design, the decisions and the vocabulary lives in [`docs/`](docs/README.md).
