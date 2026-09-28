@@ -60,6 +60,11 @@ Feature: Signing in and out
     When she opens the sign-in callback address without Auth0's answer
     Then the wardrobe is shown
 
+  Scenario: a signed-in user who opens the callback with an error but no state goes to the wardrobe
+    Given Alice is signed in
+    When she opens the sign-in callback address with an error the SDK will not pair with a state
+    Then the wardrobe is shown
+
   Scenario: a sign-in that failed at Auth0 comes back to the welcome screen
     Given the last sign-in attempt failed
     When Auth0 sends the visitor back to the app
