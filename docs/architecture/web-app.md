@@ -66,6 +66,12 @@ hands the file to its page as a `Blob`, which crosses the port unchanged (`NewGa
 the HTTP repository uploads it to R2 through a presigned URL instead, with no change to the screens.
 Sample garments use `placeholderPhoto(color)`, a flat SVG.
 
+From phase 5, `src/data/api/api-client.ts` is the only way to reach the API: `createApiClient`
+asks the session for an access token on every request, sends it as `Authorization: Bearer`, and
+accepts only paths relative to the API root, so the token never travels to another origin. A
+`SessionExpiredError` from the session stops the request before it is sent. Phase 6 builds the
+typed client and the HTTP repositories on top of it.
+
 ## Session
 
 Screens learn who is signed in through the `Session` port in `src/session/session.ts`
