@@ -71,7 +71,10 @@ From phase 5, `src/data/api/api-client.ts` is the only way to reach the API: `cr
 asks the session for an access token on every request, sends it as `Authorization: Bearer`, and
 accepts only paths relative to the API root, so the token never travels to another origin. A
 `SessionExpiredError` from the session stops the request before it is sent. Phase 6 builds the
-typed client and the HTTP repositories on top of it.
+typed client and the HTTP repositories on top of it. `src/data/api/responses.ts` builds on it:
+`requestJson` sends and reads JSON and sorts failures into the three the screens treat differently:
+`SessionExpiredError` (no valid token, including a 401 from the API), `NetworkError` (no answer)
+and `ApiError` (an error answer, with the API's stable `code`).
 
 ## Session
 
