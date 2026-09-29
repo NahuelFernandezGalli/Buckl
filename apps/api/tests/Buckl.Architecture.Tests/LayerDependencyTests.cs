@@ -72,6 +72,16 @@ public class LayerDependencyTests
             prefix => name.StartsWith(prefix, StringComparison.Ordinal)));
     }
 
+    [Fact]
+    public void Only_infrastructure_references_the_storage_sdk()
+    {
+        Assert.DoesNotContain(ReferencedAssemblyNames(ApplicationAssembly), IsStorageSdk);
+        Assert.DoesNotContain(ReferencedAssemblyNames(ApiAssembly), IsStorageSdk);
+    }
+
+    private static bool IsStorageSdk(string assemblyName) =>
+        assemblyName.StartsWith("AWSSDK", StringComparison.Ordinal);
+
     private static void AssertNoDependency(Assembly from, Assembly to) =>
         Types().That().ResideInAssembly(from)
             .Should().NotDependOnAny(Types().That().ResideInAssembly(to))

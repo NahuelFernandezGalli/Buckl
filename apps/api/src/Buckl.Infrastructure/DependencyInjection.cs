@@ -3,9 +3,11 @@ using Buckl.Domain.Garments;
 using Buckl.Domain.Products;
 using Buckl.Infrastructure.Persistence;
 using Buckl.Infrastructure.Persistence.Repositories;
+using Buckl.Infrastructure.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Buckl.Infrastructure;
 
@@ -31,6 +33,13 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, EfProductRepository>();
         services.AddScoped<IGarmentRepository, EfGarmentRepository>();
         services.AddScoped<IUserProvisioning, EfUserProvisioning>();
+
+        // Validated when the host starts: without storage, adding a photo would fail on every request.
+        services.AddOptions<PhotoStorageOptions>()
+            .Bind(configuration.GetSection(PhotoStorageOptions.SectionName))
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<PhotoStorageOptions>, PhotoStorageOptionsValidator>();
+        services.AddSingleton<IPhotoStorage, S3PhotoStorage>();
 
         return services;
     }

@@ -45,4 +45,20 @@ public class StartupConfigurationTests
         var invalid = Assert.IsType<OptionsValidationException>(exception);
         Assert.Contains("Cors:AllowedOrigins", invalid.Message, StringComparison.Ordinal);
     }
+
+    [Theory]
+    [InlineData("PhotoStorage:ServiceUrl", "")]
+    [InlineData("PhotoStorage:ServiceUrl", "https://s3.us-east-005.backblazeb2.com/buckl-photos")]
+    [InlineData("PhotoStorage:Region", "")]
+    [InlineData("PhotoStorage:Bucket", "Buckl_Photos")]
+    [InlineData("PhotoStorage:SecretAccessKey", "")]
+    public void The_api_refuses_to_start_without_valid_photo_storage_settings(string key, string value)
+    {
+        using var factory = ProductionHost.Create((key, value));
+
+        var exception = Record.Exception(() => factory.CreateClient());
+
+        var invalid = Assert.IsType<OptionsValidationException>(exception);
+        Assert.Contains(key, invalid.Message, StringComparison.Ordinal);
+    }
 }
