@@ -201,7 +201,9 @@ the safety net, so this step is where design happens rather than in step 3.
 
 - Pure helpers with no user-visible behavior of their own, such as image compression, currency
   formatting or a URL parser. These get plain Vitest unit tests, driven by the usual red, green,
-  refactor cycle.
+  refactor cycle. `browserPhotoCodec` is the one piece of the photo pipeline without unit tests
+  (jsdom has neither `createImageBitmap` nor canvas); the manual check is in the phase 6
+  verification: a portrait and a landscape phone photo, orientation and missing EXIF.
 - Code that talks HTTP is tested with `fakeFetch` (`src/test/fake-fetch.ts`): a route table that
   records every request, used with the real `createApiClient` through `testApiClient`. No request
   leaves the test; an unknown route fails like a network error.
