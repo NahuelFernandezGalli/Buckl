@@ -35,8 +35,12 @@ public class GarmentPhotoEndpointsTests
             Ct);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var id = new GarmentId((await response.ReadJsonAsync(Ct)).GetProperty("id").GetGuid());
+        var body = await response.ReadJsonAsync(Ct);
+        var id = new GarmentId(body.GetProperty("id").GetGuid());
         var key = $"users/{owner.Value:D}/garments/{uploadId:N}.jpg";
+        Assert.Equal(
+            InMemoryPhotoStorage.ReadUrlFor(key, TestClock.Now.AddHours(1)).AbsoluteUri,
+            body.GetProperty("photoUrl").GetString());
         Assert.Equal(key, await _api.Database.ReadGarmentPhotoKeyAsync(id, Ct));
         Assert.True(_api.Photos.Contains(key));
         Assert.False(_api.Photos.Contains(PhotoUploads.StagingKey(owner, uploadId)));

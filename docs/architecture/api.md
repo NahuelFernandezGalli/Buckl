@@ -171,7 +171,7 @@ replaced or removed photo after the change commits (a failed deletion is logged 
 the edit).
 A photo is only moved once every other rule of the request has passed.
 
-`photoUrl` is `null` until read URLs are signed (next change). Lists are not paginated in v1.
+`photoUrl` is a presigned URL, valid for one hour, that loads the photo straight from storage; `null` when the garment has no photo. Every response signs anew; a page open for longer than an hour loads new URLs the next time it asks for the garment. Lists are not paginated in v1.
 
 Request bodies are validated for shape only (required properties, known enumeration values);
 ranges and formats are the domain's, so a rejected amount or currency comes back with the domain's
