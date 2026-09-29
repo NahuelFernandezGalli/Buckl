@@ -1,3 +1,4 @@
+using Buckl.Application.Abstractions;
 using Buckl.Application.Photos;
 using Buckl.Domain.Common;
 using Buckl.Domain.Garments;
@@ -80,6 +81,40 @@ public class PhotoAttacherTests
 
         Assert.Equal(code, exception.Code);
         Assert.False(_storage.Contains(staging));
+    }
+
+    [Fact]
+    public async Task AttachAsync_consumes_an_upload_only_once()
+    {
+        var uploadId = Guid.NewGuid();
+        var staging = PhotoUploads.StagingKey(Alice, uploadId);
+        _storage.Put(staging, 1000);
+        var key = await Attacher.AttachAsync(Alice, uploadId, Ct);
+        _storage.Put(staging, 2000);
+
+        var exception = await Assert.ThrowsAsync<DomainValidationException>(
+            () => Attacher.AttachAsync(Alice, uploadId, Ct));
+
+        Assert.Equal(PhotoUploads.Errors.UploadNotFound, exception.Code);
+        Assert.True(_storage.Contains(key.Value));
+        Assert.True(_storage.Contains(staging));
+        Assert.DoesNotContain(key.Value, _storage.Deleted);
+    }
+
+    [Fact]
+    public async Task AttachAsync_checks_again_what_the_copy_actually_holds()
+    {
+        var uploadId = Guid.NewGuid();
+        var staging = PhotoUploads.StagingKey(Alice, uploadId);
+        _storage.Put(staging, 1000);
+        _storage.OnCopy = _ => new StoredObject(PhotoFile.MaxBytes + 1, "image/jpeg");
+
+        var exception = await Assert.ThrowsAsync<DomainValidationException>(
+            () => Attacher.AttachAsync(Alice, uploadId, Ct));
+
+        Assert.Equal(PhotoFile.Errors.TooLarge, exception.Code);
+        Assert.False(_storage.Contains(staging));
+        Assert.False(_storage.Contains($"users/{Alice.Value:D}/garments/{uploadId:N}.jpg"));
     }
 
     [Fact]

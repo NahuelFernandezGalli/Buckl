@@ -20,6 +20,11 @@ public sealed class InMemoryPhotoStorage : IPhotoStorage
     /// would.</summary>
     public bool FailDeletes { get; set; }
 
+    /// <summary>When set, <see cref="CopyAsync"/> stores what this returns for the copied object
+    /// instead of the object itself: the upload URL does not sign the size, so a browser can
+    /// replace the staged object between a check and the copy.</summary>
+    public Func<StoredObject, StoredObject>? OnCopy { get; set; }
+
     public IReadOnlyCollection<string> Deleted => [.. _deleted];
 
     public IReadOnlyCollection<IssuedUpload> IssuedUploads => [.. _issuedUploads];
@@ -55,7 +60,7 @@ public sealed class InMemoryPhotoStorage : IPhotoStorage
             throw new PhotoStorageException("The object to copy does not exist.", new KeyNotFoundException());
         }
 
-        _objects[destinationKey] = stored;
+        _objects[destinationKey] = OnCopy?.Invoke(stored) ?? stored;
 
         return Task.CompletedTask;
     }
