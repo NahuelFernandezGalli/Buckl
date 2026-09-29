@@ -21,7 +21,9 @@ API moves the object under the owner's photos when a garment starts using it.
 - The garment request carries `photo: { uploadId }`. The API derives the staging key from the
   caller, so another user's upload is simply not found; it reads the stored object's real size
   and type, deletes it if it breaks the rules, and otherwise copies it to
-  `users/<userId>/garments/<uploadId>.<ext>` and deletes the staging object.
+  `users/<userId>/garments/<uploadId>.<ext>` and deletes the staging object. An upload is
+  consumed once (a key that already exists is refused), and the copy is checked again, because
+  the signed URL does not fix the size and stays valid while the API works.
 - A lifecycle rule hides everything under `uploads/` after one day, which removes it from the
   S3 API, and deletes it the day after. A second rule on `users/` purges hidden versions a day
   after they are hidden (ADR-0031), which is how a deleted or replaced photo really goes away.
@@ -51,7 +53,10 @@ API moves the object under the owner's photos when a garment starts using it.
 
 ### Negative
 
-- Attaching a photo costs three storage calls (HEAD, copy, delete) inside the request.
+- Attaching a photo costs several storage calls (HEADs, copy, delete) inside the request.
+- A photo a garment no longer uses is deleted after the change commits, not before, so a rolled
+  back edit keeps its photo. If that deletion fails the object stays until the account is
+  deleted.
 - If the database fails after the copy, the copied object stays until the account is deleted.
 - Read URLs change on every response, so the browser cannot cache photos across visits.
 - What only B2 does (CORS, rejecting a PUT with another content type) is verified by hand, not by
