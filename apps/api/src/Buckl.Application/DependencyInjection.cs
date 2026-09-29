@@ -1,4 +1,5 @@
 using Buckl.Application.Garments;
+using Buckl.Application.Photos;
 using Buckl.Application.Products;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<UpdateGarmentHandler>();
         services.AddScoped<ArchiveGarmentHandler>();
         services.AddScoped<RestoreGarmentHandler>();
+        services.AddScoped<RequestPhotoUploadHandler>();
 
         return services;
     }
