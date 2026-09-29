@@ -67,7 +67,7 @@ public sealed class Product
             ValidateReferenceImageUrl(referenceImageUrl),
             ValidateSourceUrl(sourceUrl),
             EnsureKnown(source),
-            now.ToUniversalTime());
+            Timestamps.Normalize(now));
     }
 
     /// <summary>Rebuilds a stored product. Products are immutable, so the same validation as
