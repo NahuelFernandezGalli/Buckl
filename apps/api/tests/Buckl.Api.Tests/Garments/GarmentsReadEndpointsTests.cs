@@ -96,6 +96,22 @@ public class GarmentsReadEndpointsTests
         Assert.Equal("request.invalid", await response.ReadProblemCodeAsync(Ct));
     }
 
+    [Theory]
+    [InlineData("?status=1")]
+    [InlineData("?category=0")]
+    [InlineData("?category=top,bottom")]
+    [InlineData("?status=active&status=archived")]
+    [InlineData("?color=blue%20")]
+    public async Task A_wardrobe_filter_that_is_not_one_known_name_is_a_bad_request(string query)
+    {
+        using var client = _api.CreateClientFor(Subjects.New());
+
+        using var response = await client.GetAsync(Http.Url($"/garments{query}"), Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("request.invalid", await response.ReadProblemCodeAsync(Ct));
+    }
+
     [Fact]
     public async Task Search_text_over_the_limit_is_rejected_with_the_domain_code()
     {
