@@ -1,11 +1,11 @@
+using Buckl.Api.Photos;
 using Buckl.Domain.Common;
 using Buckl.Domain.Garments;
 
 namespace Buckl.Api.Contracts;
 
 /// <summary>A garment as the web app's <c>Garment</c> type expects it
-/// (apps/web/src/domain/garment.ts). <see cref="PhotoUrl"/> is always null until phase 6 signs
-/// photo URLs.</summary>
+/// (apps/web/src/domain/garment.ts). <see cref="PhotoUrl"/> is a presigned URL valid for an hour, or null when the garment has no photo.</summary>
 public sealed record GarmentResponse(
     Guid Id,
     Guid? ProductId,
@@ -19,14 +19,15 @@ public sealed record GarmentResponse(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? ArchivedAt)
 {
-    public static GarmentResponse From(Garment garment)
+    public static GarmentResponse From(Garment garment, PhotoUrls photoUrls)
     {
         ArgumentNullException.ThrowIfNull(garment);
+        ArgumentNullException.ThrowIfNull(photoUrls);
 
         return new GarmentResponse(
             garment.Id.Value,
             garment.ProductId?.Value,
-            PhotoUrl: null,
+            photoUrls.For(garment.PhotoKey),
             new ClassificationResponse(
                 garment.Classification.Category,
                 garment.Classification.Color,
