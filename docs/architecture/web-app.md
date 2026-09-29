@@ -66,6 +66,7 @@ hands the file to its page as a `Blob`, which crosses the port unchanged (`NewGa
 the HTTP repository prepares the photo first (`preparePhoto`, [ADR-0033](../adr/0033-prepare-photos-in-the-browser-before-upload.md)):
 the centered 4:5 part, at most 1080×1350, as a JPEG without metadata. Then it uploads to Backblaze B2 through a presigned URL, with no change to
 the screens.
+`createPhotoUploader` is the browser's side of [ADR-0032](../adr/0032-upload-photos-straight-to-storage-through-a-staging-prefix.md): it prepares the photo, asks `POST /photos/uploads` for a ticket, and PUTs the photo straight to storage with the ticket's headers and without the access token. A failed PUT is a `PhotoUploadError`.
 Sample garments use `placeholderPhoto(color)`, a flat SVG.
 
 From phase 5, `src/data/api/api-client.ts` is the only way to reach the API: `createApiClient`
