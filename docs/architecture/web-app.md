@@ -49,10 +49,14 @@ Screens depend on the ports in `src/domain/garment-repository.ts` and
 `src/domain/product-repository.ts` ([ADR-0019](../adr/0019-access-data-through-repository-ports-in-the-web-app.md)).
 `RepositoriesProvider` injects an implementation at the root; `useRepositories()` returns it.
 
-| Phase | Implementation                                                                                |
-| ----- | --------------------------------------------------------------------------------------------- |
-| 3     | `InMemoryGarmentRepository` and `InMemoryProductRepository`, seeded with `sample-wardrobe.ts` |
-| 6     | Repository over the typed HTTP client; in-memory stays for tests                              |
+| Phase | Implementation                                                                                                                                           |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3     | `InMemoryGarmentRepository` and `InMemoryProductRepository`, seeded with `sample-wardrobe.ts`                                                            |
+| 6     | `HttpGarmentRepository` and `HttpProductRepository` over `requestJson`; photos through `createPhotoUploader`. The in-memory repositories stay for tests. |
+
+Lookups answer `null` for a 404, like the in-memory repositories; `update` sends only the fields
+present in `GarmentChanges` (`PATCH`), and a `Blob` photo is uploaded first and sent as `{ uploadId }`
+([ADR-0034](../adr/0034-mirror-the-api-contract-by-hand-in-the-web-app.md)).
 
 The types in `src/domain` are a read model of the API: `photoUrl` is the URL the browser can load
 (a signed URL from the API, a data URL while the app runs on mock data), enumerations are the
