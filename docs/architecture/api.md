@@ -126,7 +126,8 @@ validation code is the production one; only the source of the keys changes.
    through `IUserProvisioning`, binds `ICurrentUser`, and opens the user-scoped transaction.
 6. The controller action calls one handler; handlers save through `IUnitOfWork`.
 7. Back in the filter, the transaction commits if the action completed, and rolls back if it
-   threw.
+   threw. After a commit, the follow-up work the handlers queued through `IAfterCommit` (deleting
+   a replaced or removed photo) runs; after a rollback it is dropped.
 
 The health endpoint is not an MVC action, so it never opens a transaction.
 
@@ -166,10 +167,11 @@ those headers and no token; the garment request then refers to the photo as
 In `POST /garments` and `PATCH /garments/{id}`, `photo` is `{ "uploadId": "…" }` to set or
 replace the photo, and `null` in `PATCH` to remove it; absent, the photo stays as it is. The API
 checks the uploaded object's real size and type, moves it under the owner's photos, and deletes a
-replaced or removed photo after saving (a failed deletion is logged and does not fail the edit).
+replaced or removed photo after the change commits (a failed deletion is logged and does not fail
+the edit).
 A photo is only moved once every other rule of the request has passed.
 
-`photoUrl` is always `null` until phase 6 attaches photos. Lists are not paginated in v1.
+`photoUrl` is `null` until read URLs are signed (next change). Lists are not paginated in v1.
 
 Request bodies are validated for shape only (required properties, known enumeration values);
 ranges and formats are the domain's, so a rejected amount or currency comes back with the domain's

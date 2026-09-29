@@ -17,18 +17,22 @@ public sealed class UpdateGarmentHandler
 
     private readonly PhotoAttacher _photos;
 
+    private readonly IAfterCommit _afterCommit;
+
     public UpdateGarmentHandler(
         IGarmentRepository garments,
         IUnitOfWork unitOfWork,
         ICurrentUser currentUser,
         TimeProvider time,
-        PhotoAttacher photos)
+        PhotoAttacher photos,
+        IAfterCommit afterCommit)
     {
         _garments = garments;
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
         _time = time;
         _photos = photos;
+        _afterCommit = afterCommit;
     }
 
     public async Task<Garment> HandleAsync(
@@ -82,7 +86,8 @@ public sealed class UpdateGarmentHandler
 
         if (previousPhoto is not null && previousPhoto != garment.PhotoKey)
         {
-            await _photos.ReleaseAsync(previousPhoto, cancellationToken);
+            // Deleted only once the request's transaction commits: a rollback keeps the old photo.
+            _afterCommit.Enqueue(token => _photos.ReleaseAsync(previousPhoto, token));
         }
 
         return garment;

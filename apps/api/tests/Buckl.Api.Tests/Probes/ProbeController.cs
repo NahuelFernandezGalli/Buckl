@@ -46,6 +46,20 @@ public sealed class ProbeController : ControllerBase
         return new SessionProbe(currentUser.Id.Value, setting);
     }
 
+    /// <summary>Queues follow-up work under <paramref name="name"/>, then fails if asked to.</summary>
+    [HttpPost("after-commit/{name}")]
+    public IActionResult QueueAfterCommit(string name, [FromQuery] bool fail, [FromServices] IAfterCommit afterCommit)
+    {
+        afterCommit.Enqueue(_ =>
+        {
+            AfterCommitProbe.MarkRan(name);
+
+            return Task.CompletedTask;
+        });
+
+        return fail ? throw new InvalidOperationException("Probe failure after queueing.") : NoContent();
+    }
+
     /// <summary>Writes a product, then fails if asked to, after the write reached the database.</summary>
     [HttpPost("products/{id:guid}")]
     public async Task<IActionResult> WriteProduct(
@@ -68,3 +82,13 @@ public sealed class ProbeController : ControllerBase
 }
 
 public sealed record SessionProbe(Guid UserId, string? Setting);
+
+/// <summary>What the after-commit probe ran, by the name the test gave it.</summary>
+public static class AfterCommitProbe
+{
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> Ran = new();
+
+    public static bool HasRun(string name) => Ran.ContainsKey(name);
+
+    public static void MarkRan(string name) => Ran[name] = true;
+}

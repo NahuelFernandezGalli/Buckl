@@ -20,6 +20,8 @@ public class UpdateGarmentHandlerTests
 
     private readonly InMemoryPhotoStorage _storage = new();
 
+    private readonly RecordingAfterCommit _afterCommit = new();
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -145,8 +147,12 @@ public class UpdateGarmentHandlerTests
         var updated = await Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct);
 
         Assert.Equal($"users/{Alice.Value:D}/garments/{uploadId:N}.jpg", updated.PhotoKey?.Value);
-        Assert.False(_storage.Contains(old.Value));
         Assert.Equal(1, _unitOfWork.SaveCount);
+        Assert.True(_storage.Contains(old.Value));
+
+        await _afterCommit.RunAllAsync();
+
+        Assert.False(_storage.Contains(old.Value));
     }
 
     [Fact]
@@ -160,7 +166,25 @@ public class UpdateGarmentHandlerTests
         var updated = await Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct);
 
         Assert.Null(updated.PhotoKey);
+        Assert.True(_storage.Contains(old.Value));
+
+        await _afterCommit.RunAllAsync();
+
         Assert.False(_storage.Contains(old.Value));
+    }
+
+    [Fact]
+    public async Task HandleAsync_deletes_nothing_until_the_transaction_commits()
+    {
+        var old = TestGarments.PhotoFor(Alice);
+        _storage.Put(old.Value, 1000);
+        var garment = TestGarments.Active(Alice, photoKey: old);
+        var command = new UpdateGarmentCommand(garment.Id, default, default, default, new FieldUpdate<Guid?>(null));
+
+        await Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct);
+
+        Assert.Equal(1, _afterCommit.Pending);
+        Assert.Empty(_storage.Deleted);
     }
 
     [Fact]
@@ -173,7 +197,7 @@ public class UpdateGarmentHandlerTests
         var updated = await Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct);
 
         Assert.Equal(photo, updated.PhotoKey);
-        Assert.Empty(_storage.Deleted);
+        Assert.Equal(0, _afterCommit.Pending);
     }
 
     [Fact]
@@ -196,5 +220,6 @@ public class UpdateGarmentHandlerTests
         _unitOfWork,
         new FakeCurrentUser(Alice),
         new FixedTimeProvider(Later),
-        new PhotoAttacher(_storage, NullLogger<PhotoAttacher>.Instance));
+        new PhotoAttacher(_storage, NullLogger<PhotoAttacher>.Instance),
+        _afterCommit);
 }
