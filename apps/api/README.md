@@ -87,8 +87,8 @@ BOB_TOKEN=<access token of the second test user>
 To get a token, sign in to the web app at `http://localhost:5173` as that user, open the browser's
 developer tools, and copy `access_token` from the response of the `oauth/token` request. Tokens
 expire after an hour. Never paste a token into an online decoder. The photo requests in the file
-upload `src/Buckl.Api/sample-photo.jpg`, which is any JPEG of your own; git ignores it. The API reference is at
-`http://localhost:5080/scalar/v1`.
+upload `src/Buckl.Api/sample-photo.jpg`, which is any JPEG of your own; git ignores it. The API
+reference is at `http://localhost:5080/scalar/v1`.
 
 ## Database migrations
 
