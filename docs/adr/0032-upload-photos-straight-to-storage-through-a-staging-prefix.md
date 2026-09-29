@@ -23,7 +23,8 @@ API moves the object under the owner's photos when a garment starts using it.
   and type, deletes it if it breaks the rules, and otherwise copies it to
   `users/<userId>/garments/<uploadId>.<ext>` and deletes the staging object.
 - A lifecycle rule hides everything under `uploads/` after one day, which removes it from the
-  S3 API, and deletes it the day after.
+  S3 API, and deletes it the day after. A second rule on `users/` purges hidden versions a day
+  after they are hidden (ADR-0031), which is how a deleted or replaced photo really goes away.
 - Responses carry `photoUrl`, a presigned GET valid for one hour.
 - The adapter is `S3PhotoStorage` over the AWS SDK for .NET, behind `IPhotoStorage`, sending
   checksums only when an operation requires them (not every S3-compatible store accepts the

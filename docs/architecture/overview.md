@@ -49,10 +49,10 @@ flowchart TB
 
     web -->|"login (Authorization Code + PKCE)"| auth0
     web -->|"HTTPS + Bearer JWT"| api
-    web -->|"upload and read photos via presigned URLs"| r2
+    web -->|"upload and read photos via presigned URLs"| b2
     api -->|"validates JWT (JWKS)"| auth0
     api -->|"SQL, sets app.user_id per request"| db
-    api -->|"issues presigned URLs"| r2
+    api -->|"issues presigned URLs"| b2
 ```
 
 | Container     | Technology                              | Responsibility                                                                 | Hosting (phase 9)                            |

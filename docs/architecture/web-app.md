@@ -63,7 +63,8 @@ Photos in phase 3: `PhotoCapture` previews a picked file through an object URL. 
 hands the file to its page as a `Blob`, which crosses the port unchanged (`NewGarment.photo`,
 `GarmentChanges.photo`, where leaving it out keeps the current photo and `null` removes it).
 `InMemoryGarmentRepository` turns the blob into a data URL and serves it as `photoUrl`; in phase 6
-the HTTP repository uploads it to R2 through a presigned URL instead, with no change to the screens.
+the HTTP repository uploads it to Backblaze B2 through a presigned URL instead, with no change to
+the screens.
 Sample garments use `placeholderPhoto(color)`, a flat SVG.
 
 From phase 5, `src/data/api/api-client.ts` is the only way to reach the API: `createApiClient`
