@@ -62,8 +62,9 @@ Timestamps are ISO 8601 in UTC. `src/lib/format.ts` formats money and purchase d
 Photos in phase 3: `PhotoCapture` previews a picked file through an object URL. On save, the form
 hands the file to its page as a `Blob`, which crosses the port unchanged (`NewGarment.photo`,
 `GarmentChanges.photo`, where leaving it out keeps the current photo and `null` removes it).
-`InMemoryGarmentRepository` turns the blob into a data URL and serves it as `photoUrl`; in phase 6
-the HTTP repository uploads it to Backblaze B2 through a presigned URL instead, with no change to
+`InMemoryGarmentRepository` turns the blob into a data URL and serves it as `photoUrl`. From phase 6,
+the HTTP repository prepares the photo first (`preparePhoto`, [ADR-0033](../adr/0033-prepare-photos-in-the-browser-before-upload.md)):
+the centered 4:5 part, at most 1080×1350, as a JPEG without metadata. Then it uploads to Backblaze B2 through a presigned URL, with no change to
 the screens.
 Sample garments use `placeholderPhoto(color)`, a flat SVG.
 
