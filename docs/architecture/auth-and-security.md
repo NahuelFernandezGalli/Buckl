@@ -118,8 +118,8 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 
 - The web bundle is public. It contains only public configuration: Auth0 domain, client id,
   audience and the API base URL, as `VITE_` variables.
-- Real secrets (database connection strings, the Backblaze B2 application key) live only in the API's
-  environment: user secrets locally, the host's secret store when deployed. `.env` files are
+- Real secrets (database connection strings, the Backblaze B2 application key) live only in the
+  API's environment: user secrets locally, the host's secret store when deployed. `.env` files are
   ignored by git; `.env.example` files document the names without values.
 - Every variable, where it comes from and whether it is secret: [Configuration](../configuration.md).
 - CI runs gitleaks on every pull request and weekly, and GitHub push protection blocks known

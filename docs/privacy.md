@@ -50,7 +50,8 @@ Buckl does not use analytics, advertising identifiers or third-party tracking sc
 Account deletion, performed manually by the maintainer on request in v1:
 
 1. Delete the user's garments, outfits and wear logs in Neon, cascading from `users`.
-2. Delete every object under `users/<userId>/` in Backblaze B2.
+2. Delete every object under `users/<userId>/` in Backblaze B2. Deleting hides an object there,
+   and a lifecycle rule removes the hidden version a day later.
 3. Delete the user in Auth0.
 
 Products stay because they carry no personal data. A self-service "delete my account" action is a
@@ -60,7 +61,9 @@ candidate for a later phase.
 
 Photos may show a person, a room or a location. They are private to the owner, served only through
 short-lived signed URLs, and never used for any purpose other than showing the garment to its
-owner. Client-side compression in phase 6 reduces resolution before upload.
+owner. Client-side compression in phase 6 reduces resolution before upload. When a photo is
+replaced or its garment deleted, the object is hidden in Backblaze B2 at once and the storage
+removes it for good a day later.
 
 ## Changes
 

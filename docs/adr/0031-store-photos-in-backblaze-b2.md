@@ -23,6 +23,10 @@ We store garment photos in Backblaze B2, through its S3-compatible API.
 - The API uses an application key with read and write access to that bucket only.
 - CORS allows only `s3_put` from the web app's origins; the rule is set with the B2 CLI, since the
   web console only offers generic rules.
+- Two lifecycle rules, on separate prefixes because B2 rules must not overlap: `uploads/` hides
+  files after one day and deletes them a day later; `users/` never hides on its own and deletes
+  hidden files one day after they were hidden. Deleting an object through the S3 API only hides it
+  in B2, so the `users/` rule is what actually removes replaced and deleted photos.
 - The free tier covers 10 GB of storage, 1 GB of downloads and 2,500 class B and C transactions a
   day, with no payment method on file; past a cap, requests fail until the next day instead of
   being charged.
@@ -52,6 +56,8 @@ We store garment photos in Backblaze B2, through its S3-compatible API.
   has to allow it.
 - Lifecycle rules act in whole days: a staging object is hidden after one day and deleted the day
   after.
+- A deleted or replaced photo lingers up to a day as a hidden version, and counts toward the
+  storage cap until the lifecycle rule removes it.
 
 ## References
 

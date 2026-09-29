@@ -40,9 +40,9 @@ environment variables, `__` stands for `:` (`Auth0__Domain`).
 | `PhotoStorage:SecretAccessKey` | yes    | user secrets                         | host secret               | The application key itself                                          |
 | `BUCKL_MIGRATIONS_CONNECTION`  | yes    | shell variable, only while migrating | CI secret                 | Owner role, for migrations; not the API's                           |
 
-The API validates the Auth0, CORS and photo storage settings when it starts and refuses to start if they are
-missing or malformed. [`apps/api/.env.example`](../apps/api/.env.example) lists every key as an
-environment variable; the API itself never reads `.env` files. How to set them locally:
+The API validates the Auth0, CORS and photo storage settings when it starts and refuses to start
+if they are missing or malformed. [`apps/api/.env.example`](../apps/api/.env.example) lists every
+key as an environment variable; the API itself never reads `.env` files. How to set them locally:
 [`apps/api/README.md`](../apps/api/README.md).
 
 ## Files that stay out of git
@@ -75,13 +75,13 @@ Port 4173 is `vite preview`, used to try the installed app on a phone.
 One Backblaze B2 bucket per environment: `buckl-photos-dev` for development; production gets its
 own in phase 9.
 
-| Item            | Setting                                                                                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Bucket type     | Private (`allPrivate`), encrypted at rest (SSE-B2), no object lock. Photos are served only through presigned URLs                                      |
-| CORS            | One rule, set with the B2 CLI: operation `s3_put` from the web app's origins (`http://localhost:5173`, `http://localhost:4173`), header `content-type` |
-| Lifecycle       | Files under `uploads/` are hidden after 1 day and deleted 1 day later                                                                                  |
-| Application key | Read and Write, limited to the bucket; it lives only in user secrets or the host                                                                       |
-| Free tier       | 10 GB stored, 1 GB downloaded and 2,500 class B and C transactions a day; no payment method on file                                                    |
+| Item            | Setting                                                                                                                                                                                   |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bucket type     | Private (`allPrivate`), encrypted at rest (SSE-B2), no object lock. Photos are served only through presigned URLs                                                                         |
+| CORS            | One rule, set with the B2 CLI: operation `s3_put` from the web app's origins (`http://localhost:5173`, `http://localhost:4173`), header `content-type`                                    |
+| Lifecycle       | Two rules, which must not overlap: `uploads/` hides files after 1 day and deletes them 1 day later; `users/` never hides on its own and deletes hidden files 1 day after they were hidden |
+| Application key | Read and Write, limited to the bucket; it lives only in user secrets or the host                                                                                                          |
+| Free tier       | 10 GB stored, 1 GB downloaded and 2,500 class B and C transactions a day; no payment method on file                                                                                       |
 
 The CORS rule, for when the bucket is created again (the web console cannot write custom rules):
 
