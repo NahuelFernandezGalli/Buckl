@@ -122,4 +122,25 @@ public class PhotoKeyTests
 
         Assert.Equal(PhotoKey.Errors.Empty, exception.Code);
     }
+
+    [Fact]
+    public void ForGarmentPhoto_keeps_the_photo_under_its_owners_garments()
+    {
+        var owner = UserId.New();
+        var photoId = Guid.NewGuid();
+
+        var key = PhotoKey.ForGarmentPhoto(owner, photoId, PhotoFile.Create("image/webp", 10));
+
+        Assert.Equal($"users/{owner.Value:D}/garments/{photoId:N}.webp", key.Value);
+        Assert.Equal(owner, key.OwnerId);
+    }
+
+    [Fact]
+    public void ForGarmentPhoto_needs_a_photo_id()
+    {
+        var exception = Assert.Throws<DomainValidationException>(
+            () => PhotoKey.ForGarmentPhoto(UserId.New(), Guid.Empty, PhotoFile.Create("image/jpeg", 10)));
+
+        Assert.Equal(PhotoKey.Errors.Empty, exception.Code);
+    }
 }
