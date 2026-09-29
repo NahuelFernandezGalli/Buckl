@@ -53,6 +53,21 @@ public sealed record PhotoKey
         return new PhotoKey(value, ownerId);
     }
 
+    /// <summary>Where a garment photo is kept:
+    /// <c>users/&lt;ownerId&gt;/garments/&lt;photoId&gt;.&lt;extension&gt;</c>. The photo id is the
+    /// id of the upload it came from, so a key never repeats.</summary>
+    public static PhotoKey ForGarmentPhoto(UserId ownerId, Guid photoId, PhotoFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        if (photoId == Guid.Empty)
+        {
+            throw new DomainValidationException(Errors.Empty, "Photo id cannot be empty.");
+        }
+
+        return Create($"{PrefixFor(ownerId)}garments/{photoId:N}.{file.Extension}", ownerId);
+    }
+
     /// <summary>Rebuilds a stored key, reading its owner from the <c>users/&lt;userId&gt;/</c>
     /// prefix. Used when loading garments; the database stores only the key.</summary>
     public static PhotoKey Parse(string value)
