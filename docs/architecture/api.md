@@ -7,13 +7,13 @@ Core controllers, EF Core on Postgres and xUnit v3; testing follows
 
 ## Projects
 
-| Project                    | Depends on                  | Responsibility                                                      |
-| -------------------------- | --------------------------- | ------------------------------------------------------------------- |
-| `src/Buckl.Domain`         | nothing                     | Aggregates, value objects, rules and repository ports (phase 2)     |
-| `src/Buckl.Application`    | Domain                      | One handler per use case and the ports they need                    |
-| `src/Buckl.Infrastructure` | Application                 | EF Core persistence, migrations, Row-Level Security session binding |
-| `src/Buckl.Api`            | Application, Infrastructure | Controllers, authentication, error mapping; composition root        |
-| `tests/Buckl.*.Tests`      | the layer under test        | One test project per layer, plus `Buckl.Architecture.Tests`         |
+| Project                    | Depends on                  | Responsibility                                                                     |
+| -------------------------- | --------------------------- | ---------------------------------------------------------------------------------- |
+| `src/Buckl.Domain`         | nothing                     | Aggregates, value objects, rules and repository ports (phase 2)                    |
+| `src/Buckl.Application`    | Domain                      | One handler per use case and the ports they need                                   |
+| `src/Buckl.Infrastructure` | Application                 | EF Core persistence, migrations, Row-Level Security session binding, photo storage |
+| `src/Buckl.Api`            | Application, Infrastructure | Controllers, authentication, error mapping; composition root                       |
+| `tests/Buckl.*.Tests`      | the layer under test        | One test project per layer, plus `Buckl.Architecture.Tests`                        |
 
 `Buckl.Architecture.Tests` fails the build if a layer references one it must not, or if the domain
 or the application reference EF Core, Npgsql or ASP.NET Core.
@@ -81,6 +81,14 @@ transaction ends ([ADR-0025](../adr/0025-bind-each-request-to-one-user-scoped-tr
 Handlers persist through `IUnitOfWork.SaveChangesAsync`, which writes inside that transaction;
 they never commit. The integration tests prove that a committed user does not leak into the next
 use of a pooled connection.
+
+## Photo storage
+
+`IPhotoStorage` (in `Buckl.Application/Abstractions`) signs upload and read URLs and finds, copies
+and deletes objects. `Buckl.Infrastructure/Storage/S3PhotoStorage` implements it over the AWS SDK
+for Backblaze B2 ([ADR-0032](../adr/0032-upload-photos-straight-to-storage-through-a-staging-prefix.md)).
+Signing is local and costs no request. `PhotoStorage:*` is validated when the host starts. Tests
+of the API use `InMemoryPhotoStorage`; only the adapter's own tests talk to an S3 emulator.
 
 ## Authentication
 

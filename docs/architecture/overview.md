@@ -43,7 +43,7 @@ flowchart TB
     subgraph backend["Backend"]
         api["API<br/>.NET, layered"]
         db[("Database<br/>Postgres on Neon<br/>RLS enabled")]
-        r2[("Photo storage<br/>Cloudflare R2")]
+        b2[("Photo storage<br/>Backblaze B2")]
     end
     auth0["Auth0"]
 
@@ -60,7 +60,7 @@ flowchart TB
 | Web app       | React 19, Vite, TypeScript, Vitest, PWA | UI, camera capture, offline shell, calls the API with the user's token         | Static site (Cloudflare Pages or equivalent) |
 | API           | .NET (ASP.NET Core), EF Core            | Domain rules, use cases, authorization, RLS session binding, presigned uploads | Free container or app host, to be chosen     |
 | Database      | Postgres on Neon                        | Persistent data with Row-Level Security policies                               | Neon free tier                               |
-| Photo storage | Cloudflare R2 (S3-compatible)           | Garment photos, accessed only through presigned URLs                           | R2 free tier                                 |
+| Photo storage | Backblaze B2 (S3-compatible)            | Garment photos, accessed only through presigned URLs                           | B2 free tier, no payment method              |
 | Identity      | Auth0                                   | Sign-up, login, tokens; Buckl stores no passwords                              | Auth0 free tier                              |
 
 The web app is an installable PWA. Its service worker caches only the app shell (the build output),
@@ -74,7 +74,7 @@ The API follows a layered (clean) architecture with dependencies pointing inward
 ```mermaid
 flowchart LR
     apiLayer["Buckl.Api<br/>endpoints, DTOs, auth middleware"] --> app["Buckl.Application<br/>use cases, ports"]
-    infra["Buckl.Infrastructure<br/>EF Core, R2 adapter, Auth0 config"] --> app
+    infra["Buckl.Infrastructure<br/>EF Core, B2 adapter, Auth0 config"] --> app
     app --> domain["Buckl.Domain<br/>entities, value objects, rules"]
 ```
 
@@ -83,7 +83,7 @@ flowchart LR
 - `Buckl.Application` orchestrates use cases (`ListWardrobe`, `CreateGarment`, and the rest)
   against the domain and its ports.
 - `Buckl.Infrastructure` implements the ports: EF Core repositories, per-request user transaction
-  ([ADR-0025](../adr/0025-bind-each-request-to-one-user-scoped-transaction.md)), R2 storage
+  ([ADR-0025](../adr/0025-bind-each-request-to-one-user-scoped-transaction.md)), B2 storage
   adapter.
 - `Buckl.Api` exposes MVC controllers, maps errors to problem details with a stable `code`, runs
   every action inside its user's transaction (a global action filter) and authenticates Auth0
@@ -112,8 +112,8 @@ Loading the wardrobe, once every phase is in place:
 4. The API validates the token, maps its subject to the local user (creating it on the first
    request), opens a transaction and executes `set_config('app.user_id', '<user id>', true)`.
 5. EF Core queries `garments`; RLS policies filter rows to that user.
-6. For each garment with a photo, the API returns a short-lived signed read URL for R2.
-7. The web app renders the grid; photos load directly from R2.
+6. For each garment with a photo, the API returns a short-lived signed read URL for B2.
+7. The web app renders the grid; photos load directly from B2.
 
 ## Cross-cutting concerns
 
