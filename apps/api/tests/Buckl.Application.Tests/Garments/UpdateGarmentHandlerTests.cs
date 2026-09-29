@@ -75,6 +75,32 @@ public class UpdateGarmentHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_rejects_an_archived_garment_even_when_nothing_changes()
+    {
+        var garment = TestGarments.Archived(Alice);
+        var command = new UpdateGarmentCommand(garment.Id, default, default, default);
+
+        await Assert.ThrowsAsync<ArchivedGarmentIsReadOnlyException>(
+            () => Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct));
+
+        Assert.Equal(0, _unitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task HandleAsync_reports_an_archived_garment_before_an_invalid_change()
+    {
+        var garment = TestGarments.Archived(Alice);
+        var command = new UpdateGarmentCommand(
+            garment.Id,
+            new FieldUpdate<ClassificationInput>(new ClassificationInput(Category.Top, Color.Blue, new string('M', 30))),
+            default,
+            default);
+
+        await Assert.ThrowsAsync<ArchivedGarmentIsReadOnlyException>(
+            () => Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct));
+    }
+
+    [Fact]
     public async Task HandleAsync_reports_another_users_garment_as_not_found()
     {
         var bobsGarment = TestGarments.Active(UserId.New());

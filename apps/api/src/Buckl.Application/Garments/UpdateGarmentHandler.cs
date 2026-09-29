@@ -33,6 +33,14 @@ public sealed class UpdateGarmentHandler
         ArgumentNullException.ThrowIfNull(command);
 
         var garment = await _garments.GetOwnedAsync(command.Id, _currentUser.Id, cancellationToken);
+
+        // Checked before anything in the command is read: an archived garment answers the same
+        // whatever the request asked for, and a photo upload is never consumed for it.
+        if (garment.IsArchived)
+        {
+            throw new ArchivedGarmentIsReadOnlyException(garment.Id);
+        }
+
         var now = _time.GetUtcNow();
 
         if (command.Classification.IsSet)
