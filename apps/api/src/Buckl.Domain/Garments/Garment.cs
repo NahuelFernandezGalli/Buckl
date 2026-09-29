@@ -192,6 +192,17 @@ public sealed class Garment
         Touch(now);
     }
 
+    /// <summary>Leaves the garment without a photo. Deleting the stored object is the
+    /// application's job, once the change is saved.</summary>
+    /// <param name="now">The caller's current instant; stored in UTC.</param>
+    public void RemovePhoto(DateTimeOffset now)
+    {
+        EnsureEditable();
+
+        PhotoKey = null;
+        Touch(now);
+    }
+
     /// <summary>Sets or clears the free-text note.</summary>
     /// <param name="notes">The new note, or null or blank to clear it.</param>
     /// <param name="now">The caller's current instant; stored in UTC.</param>
