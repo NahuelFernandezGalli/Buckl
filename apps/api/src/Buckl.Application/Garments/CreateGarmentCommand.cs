@@ -1,7 +1,9 @@
 namespace Buckl.Application.Garments;
 
-/// <summary>A garment added by hand. Photos are attached in phase 6, not at creation.</summary>
+/// <summary>A garment added by hand, optionally with a photo the browser already uploaded
+/// (ADR-0032).</summary>
 public sealed record CreateGarmentCommand(
     ClassificationInput Classification,
     PurchaseInput? Purchase,
-    string? Notes);
+    string? Notes,
+    Guid? PhotoUploadId = null);
