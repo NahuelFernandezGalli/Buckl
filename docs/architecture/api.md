@@ -26,19 +26,20 @@ or the application reference EF Core, Npgsql or ASP.NET Core.
 ## Use cases
 
 Each use case is one `sealed` handler class in `Buckl.Application`, grouped by aggregate
-(`Garments/`, `Products/`), with a single `HandleAsync` method. Handlers depend on domain ports and
+(`Garments/`, `Products/`, `Photos/`), with a single `HandleAsync` method. Handlers depend on domain ports and
 on application ports in `Abstractions/` (`ICurrentUser`, `IUnitOfWork`, `IUserTransactionFactory`,
-`IUserProvisioning`), never on EF Core or ASP.NET Core.
+`IUserProvisioning`, `IPhotoStorage`), never on EF Core or ASP.NET Core.
 
-| Handler                 | Input                            | Output   | Errors                                                                           |
-| ----------------------- | -------------------------------- | -------- | -------------------------------------------------------------------------------- |
-| `ListWardrobeHandler`   | `WardrobeFilter`                 | garments | —                                                                                |
-| `GetGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`                                                              |
-| `GetProductHandler`     | `ProductId`                      | product  | `product.not_found`                                                              |
-| `CreateGarmentHandler`  | `CreateGarmentCommand`           | garment  | validation codes of `Classification`, `Size`, `Money`, `PurchaseInfo`, `Garment` |
-| `UpdateGarmentHandler`  | `UpdateGarmentCommand` (partial) | garment  | `garment.not_found`, `garment.archived_read_only`, validation codes              |
-| `ArchiveGarmentHandler` | `GarmentId`                      | garment  | `garment.not_found`, `garment.already_archived`                                  |
-| `RestoreGarmentHandler` | `GarmentId`                      | garment  | `garment.not_found`, `garment.not_archived`                                      |
+| Handler                     | Input                            | Output   | Errors                                                                           |
+| --------------------------- | -------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| `ListWardrobeHandler`       | `WardrobeFilter`                 | garments | —                                                                                |
+| `GetGarmentHandler`         | `GarmentId`                      | garment  | `garment.not_found`                                                              |
+| `GetProductHandler`         | `ProductId`                      | product  | `product.not_found`                                                              |
+| `CreateGarmentHandler`      | `CreateGarmentCommand`           | garment  | validation codes of `Classification`, `Size`, `Money`, `PurchaseInfo`, `Garment` |
+| `UpdateGarmentHandler`      | `UpdateGarmentCommand` (partial) | garment  | `garment.not_found`, `garment.archived_read_only`, validation codes              |
+| `ArchiveGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`, `garment.already_archived`                                  |
+| `RestoreGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`, `garment.not_archived`                                      |
+| `RequestPhotoUploadHandler` | `RequestPhotoUploadCommand`      | ticket   | `photo.unsupported_type`, `photo.empty`, `photo.too_large`                       |
 
 A garment that exists but belongs to someone else is reported exactly like one that does not
 exist.
@@ -135,18 +136,19 @@ The contract mirrors the web app's repository ports (`apps/web/src/domain`), so 
 in-memory repository for HTTP without touching screens. JSON is camel case, enumerations are
 lower-case strings, dates are `YYYY-MM-DD`, and timestamps are ISO 8601 in UTC.
 
-| Method and path               | Purpose                                                                | Success          |
-| ----------------------------- | ---------------------------------------------------------------------- | ---------------- |
-| `GET /health`                 | Liveness probe (anonymous)                                             | 200              |
-| `GET /garments`               | Wardrobe: `?category=&color=&size=&q=&status=`                         | 200              |
-| `GET /garments/{id}`          | One garment                                                            | 200              |
-| `GET /products/{id}`          | One catalog product                                                    | 200              |
-| `POST /garments`              | Add a garment by hand                                                  | 201 + `Location` |
-| `PATCH /garments/{id}`        | Partial edit: absent fields untouched, `null` clears                   | 200              |
-| `POST /garments/{id}/archive` | Archive                                                                | 200              |
-| `POST /garments/{id}/restore` | Restore                                                                | 200              |
-| `GET /openapi/v1.json`        | OpenAPI document with the bearer token scheme (Development, anonymous) | 200              |
-| `GET /scalar/v1`              | API reference UI (Development, anonymous)                              | 200              |
+| Method and path               | Purpose                                                                        | Success          |
+| ----------------------------- | ------------------------------------------------------------------------------ | ---------------- |
+| `GET /health`                 | Liveness probe (anonymous)                                                     | 200              |
+| `GET /garments`               | Wardrobe: `?category=&color=&size=&q=&status=`                                 | 200              |
+| `GET /garments/{id}`          | One garment                                                                    | 200              |
+| `GET /products/{id}`          | One catalog product                                                            | 200              |
+| `POST /garments`              | Add a garment by hand                                                          | 201 + `Location` |
+| `PATCH /garments/{id}`        | Partial edit: absent fields untouched, `null` clears                           | 200              |
+| `POST /garments/{id}/archive` | Archive                                                                        | 200              |
+| `POST /garments/{id}/restore` | Restore                                                                        | 200              |
+| `POST /photos/uploads`        | Upload ticket: a presigned PUT to the caller's staging area, valid ten minutes | 200              |
+| `GET /openapi/v1.json`        | OpenAPI document with the bearer token scheme (Development, anonymous)         | 200              |
+| `GET /scalar/v1`              | API reference UI (Development, anonymous)                                      | 200              |
 
 The OpenAPI document declares the bearer token as a security requirement of every operation, so
 the API reference at `/scalar/v1` can send one.
@@ -154,6 +156,12 @@ the API reference at `/scalar/v1` can send one.
 Enumerations in the query string are matched by name, ignoring case; numbers, comma-separated
 lists and repeated parameters are rejected with `request.invalid`. `PATCH` on an archived garment
 answers `409 garment.archived_read_only` whatever the body contains.
+
+A photo reaches a garment in three steps ([ADR-0032](../adr/0032-upload-photos-straight-to-storage-through-a-staging-prefix.md)):
+`POST /photos/uploads` with the declared `contentType` and `size` answers `uploadId`, `url`,
+`method` (`PUT`), `headers` and `expiresAt`; the browser uploads the file to `url` with exactly
+those headers and no token; the garment request then refers to the photo as
+`"photo": { "uploadId": "…" }`.
 
 `photoUrl` is always `null` until phase 6 attaches photos. Lists are not paginated in v1.
 
