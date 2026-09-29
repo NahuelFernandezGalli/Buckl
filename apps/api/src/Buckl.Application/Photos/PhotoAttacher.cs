@@ -24,14 +24,14 @@ public sealed partial class PhotoAttacher
     /// <summary>Checks what the owner uploaded with <paramref name="uploadId"/> against
     /// <see cref="PhotoFile"/>, using the stored size and type rather than what the browser
     /// declared, and moves it under the owner's photos. An upload that breaks the rules is
-    /// deleted.</summary>
+    /// deleted. An upload is consumed once: attaching the same id again finds nothing, so two
+    /// garments never share a photo. The upload URL does not sign the size and stays valid for
+    /// minutes, so the browser can replace the object between the check and the copy; the copy is
+    /// therefore checked again, and deleted with the upload if it breaks the rules.</summary>
     public async Task<PhotoKey> AttachAsync(UserId ownerId, Guid uploadId, CancellationToken cancellationToken = default)
     {
         var stagingKey = PhotoUploads.StagingKey(ownerId, uploadId);
-        var stored = await _storage.FindAsync(stagingKey, cancellationToken)
-            ?? throw new DomainValidationException(
-                PhotoUploads.Errors.UploadNotFound,
-                "The photo upload was not found. Upload the photo again.");
+        var stored = await _storage.FindAsync(stagingKey, cancellationToken) ?? throw UploadNotFound();
 
         PhotoFile file;
 
@@ -46,7 +46,26 @@ public sealed partial class PhotoAttacher
         }
 
         var key = PhotoKey.ForGarmentPhoto(ownerId, uploadId, file);
+
+        if (await _storage.FindAsync(key.Value, cancellationToken) is not null)
+        {
+            throw UploadNotFound();
+        }
+
         await _storage.CopyAsync(stagingKey, key.Value, cancellationToken);
+
+        try
+        {
+            var copy = await _storage.FindAsync(key.Value, cancellationToken) ?? throw UploadNotFound();
+            _ = PhotoFile.Create(copy.ContentType ?? string.Empty, copy.Size);
+        }
+        catch (DomainValidationException)
+        {
+            await _storage.DeleteAsync(key.Value, cancellationToken);
+            await _storage.DeleteAsync(stagingKey, cancellationToken);
+            throw;
+        }
+
         await _storage.DeleteAsync(stagingKey, cancellationToken);
 
         return key;
@@ -68,6 +87,10 @@ public sealed partial class PhotoAttacher
             LogReleaseFailed(_logger, exception);
         }
     }
+
+    private static DomainValidationException UploadNotFound() => new(
+        PhotoUploads.Errors.UploadNotFound,
+        "The photo upload was not found. Upload the photo again.");
 
     [LoggerMessage(
         Level = LogLevel.Warning,
