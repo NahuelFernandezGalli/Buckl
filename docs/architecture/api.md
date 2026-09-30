@@ -28,7 +28,7 @@ or the application reference EF Core, Npgsql or ASP.NET Core.
 Each use case is one `sealed` handler class in `Buckl.Application`, grouped by aggregate
 (`Garments/`, `Products/`, `Photos/`), with a single `HandleAsync` method. Handlers depend on domain ports and
 on application ports in `Abstractions/` (`ICurrentUser`, `IUnitOfWork`, `IUserTransactionFactory`,
-`IUserProvisioning`, `IPhotoStorage`), never on EF Core or ASP.NET Core.
+`IUserProvisioning`, `IPhotoStorage`, `IAfterCommit`), never on EF Core or ASP.NET Core.
 
 | Handler                     | Input                            | Output   | Errors                                                                                                                |
 | --------------------------- | -------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -90,6 +90,14 @@ and deletes objects. `Buckl.Infrastructure/Storage/S3PhotoStorage` implements it
 for Backblaze B2 ([ADR-0032](../adr/0032-upload-photos-straight-to-storage-through-a-staging-prefix.md)).
 Signing is local and costs no request. `PhotoStorage:*` is validated when the host starts. Tests
 of the API use `InMemoryPhotoStorage`; only the adapter's own tests talk to an S3 emulator.
+Anything that goes wrong reaching storage (a service error, a timeout, a dropped connection) is
+reported as `PhotoStorageException`; a cancellation by the caller passes through unchanged.
+
+`IAfterCommit` (also in `Abstractions`) queues follow-up work that must not happen unless the
+request's transaction commits, such as deleting a photo a saved edit no longer uses.
+`UserTransactionFilter` runs the queue after the commit and drops it on a rollback. Each action is
+isolated: one that throws is logged as a warning (its exception type only, never a key) and the next
+still runs, so cleanup can never turn a committed request into an error.
 
 ## Authentication
 
