@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { describeError } from '../../app/describe-error'
 import { Button } from '../../components/Button/Button'
 import { Input } from '../../components/Input/Input'
 import { Select } from '../../components/Select/Select'
@@ -70,7 +71,7 @@ export function GarmentForm({
       // A selection without a file is the initial photo, left unchanged.
       await onSubmit({ photo: photo ? (photo.file ?? undefined) : null, ...result.output })
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Could not save the garment.')
+      setSubmitError(describeError(error, 'Could not save the garment.'))
     } finally {
       setSubmitting(false)
     }
@@ -147,7 +148,7 @@ export function GarmentForm({
 
       {submitError && <p role="alert">{submitError}</p>}
       <Button type="submit" disabled={submitting}>
-        {submitLabel}
+        {submitting ? 'Saving…' : submitLabel}
       </Button>
     </form>
   )

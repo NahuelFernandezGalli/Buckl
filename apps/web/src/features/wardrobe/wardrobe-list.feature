@@ -24,3 +24,10 @@ Feature: Wardrobe list
     Given a wardrobe with a blue top
     When the user opens the wardrobe
     Then the blue top links to its detail
+
+  Scenario: a wardrobe that could not be loaded loads on the next try
+    Given a wardrobe with a blue top whose first load fails because the connection dropped
+    When the user opens the wardrobe
+    Then a message says Buckl could not be reached
+    When the user tries again
+    Then the blue top is listed
