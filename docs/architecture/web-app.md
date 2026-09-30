@@ -89,6 +89,21 @@ sit on top of it, and `src/data/api/responses.ts` builds on it:
 `SessionExpiredError` (no valid token, including a 401 from the API), `NetworkError` (no answer)
 and `ApiError` (an error answer, with the API's stable `code`).
 
+## Loading and errors
+
+Screens show a loading status while a repository call runs, and a message when it fails.
+`describeError` (`src/app/describe-error.ts`) turns a failure into words a person can act on, by
+the stable `code` the API, the domain mirror and the photo pipeline attach to their errors: an
+expired session, no connection, a server fault, an archived garment, and every photo failure.
+Loading the wardrobe or a garment offers "Try again". A failed save keeps the form as it was, with
+the reason above the save button, which reads "Saving…" while it waits. A photo that does not load
+(an expired URL, storage unreachable) shows the garment's color instead, and a fresh URL is tried
+the next time the screen loads.
+
+The service worker still caches only the app shell: API responses (`Cache-Control: no-store`) and
+photos (signed URLs that change on every response) are never cached by it, which settles what
+[ADR-0020](../adr/0020-use-vite-plugin-pwa-for-the-installable-shell.md) left to this phase.
+
 ## Session
 
 Screens learn who is signed in through the `Session` port in `src/session/session.ts`
