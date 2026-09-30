@@ -1,6 +1,9 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Web;
+using Amazon.Runtime;
 using Buckl.Application.Abstractions;
 using Buckl.Infrastructure.Storage;
 using Buckl.Testing;
@@ -89,6 +92,95 @@ public sealed class S3PhotoStorageTests : IClassFixture<S3Emulator>, IDisposable
             _storage.CreateReadUrl("users/a/garments/b.jpg", DateTimeOffset.UtcNow.AddHours(1)).Query);
 
         Assert.InRange(int.Parse(query["X-Amz-Expires"]!, CultureInfo.InvariantCulture), 3590, 3601);
+    }
+
+    [Fact]
+    public async Task A_cancellation_by_the_caller_is_not_a_storage_error()
+    {
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => _storage.DeleteAsync($"users/{Guid.NewGuid():D}/garments/x.jpg", cancelled.Token));
+    }
+
+    [Fact]
+    public async Task A_storage_that_drops_the_connection_is_a_storage_error()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        using var stop = new CancellationTokenSource();
+        var dropping = DropConnectionsAsync(listener, stop.Token);
+        var options = new PhotoStorageOptions
+        {
+            ServiceUrl = $"http://127.0.0.1:{((IPEndPoint)listener.LocalEndpoint).Port}",
+            Region = "us-east-1",
+            Bucket = "buckl-photos-test",
+            AccessKeyId = "test",
+            SecretAccessKey = "test",
+        };
+        using var storage = new S3PhotoStorage(Options.Create(options));
+
+        try
+        {
+            await Assert.ThrowsAsync<PhotoStorageException>(
+                () => storage.DeleteAsync($"users/{Guid.NewGuid():D}/garments/x.jpg", Ct));
+        }
+        finally
+        {
+            await stop.CancelAsync();
+            listener.Stop();
+            await dropping;
+        }
+    }
+
+    [Fact]
+    public void Transport_failures_are_storage_failures()
+    {
+        var timeout = new TaskCanceledException("timed out", new TimeoutException());
+
+        Assert.All(
+            new Exception[]
+            {
+                new AmazonClientException("client"),
+                new HttpRequestException("http"),
+                new TimeoutException(),
+                new IOException("reset"),
+                timeout,
+            },
+            exception => Assert.True(S3PhotoStorage.IsStorageFailure(exception, CancellationToken.None)));
+    }
+
+    [Fact]
+    public void A_cancellation_nobody_asked_for_is_a_storage_failure_but_the_callers_own_is_not()
+    {
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        Assert.True(S3PhotoStorage.IsStorageFailure(new OperationCanceledException(), CancellationToken.None));
+        Assert.False(S3PhotoStorage.IsStorageFailure(new OperationCanceledException(), cancelled.Token));
+    }
+
+    [Fact]
+    public void Bugs_are_not_storage_failures()
+    {
+        Assert.False(S3PhotoStorage.IsStorageFailure(new InvalidOperationException(), CancellationToken.None));
+        Assert.False(S3PhotoStorage.IsStorageFailure(new ArgumentNullException("key"), CancellationToken.None));
+    }
+
+    private static async Task DropConnectionsAsync(TcpListener listener, CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (true)
+            {
+                using var connection = await listener.AcceptTcpClientAsync(cancellationToken);
+            }
+        }
+        catch (Exception exception) when (exception is OperationCanceledException or ObjectDisposedException or SocketException)
+        {
+            // The test is over.
+        }
     }
 
     private async Task<HttpResponseMessage> PutAsync(Uri url)

@@ -59,7 +59,7 @@ public sealed class S3PhotoStorage : IPhotoStorage, IDisposable
         {
             return null;
         }
-        catch (Exception exception) when (IsStorageFailure(exception))
+        catch (Exception exception) when (IsStorageFailure(exception, cancellationToken))
         {
             throw new PhotoStorageException("Photo storage could not describe an object.", exception);
         }
@@ -79,7 +79,7 @@ public sealed class S3PhotoStorage : IPhotoStorage, IDisposable
                 },
                 cancellationToken);
         }
-        catch (Exception exception) when (IsStorageFailure(exception))
+        catch (Exception exception) when (IsStorageFailure(exception, cancellationToken))
         {
             throw new PhotoStorageException("Photo storage could not copy an object.", exception);
         }
@@ -91,7 +91,7 @@ public sealed class S3PhotoStorage : IPhotoStorage, IDisposable
         {
             await _client.DeleteObjectAsync(_bucket, key, cancellationToken);
         }
-        catch (Exception exception) when (IsStorageFailure(exception))
+        catch (Exception exception) when (IsStorageFailure(exception, cancellationToken))
         {
             throw new PhotoStorageException("Photo storage could not delete an object.", exception);
         }
@@ -110,6 +110,15 @@ public sealed class S3PhotoStorage : IPhotoStorage, IDisposable
             Protocol = _protocol,
         }));
 
-    private static bool IsStorageFailure(Exception exception) =>
-        exception is AmazonServiceException or AmazonClientException or HttpRequestException;
+    /// <summary>Whether <paramref name="exception"/> means storage could not do what was asked, as
+    /// opposed to a bug or the caller giving up. A slow or dropped connection surfaces from the SDK as a
+    /// timeout, an I/O error or a cancellation nobody asked for; only a cancellation caused by
+    /// <paramref name="cancellationToken"/> is the caller's own and passes through untouched.</summary>
+    internal static bool IsStorageFailure(Exception exception, CancellationToken cancellationToken) =>
+        exception switch
+        {
+            AmazonServiceException or AmazonClientException or HttpRequestException or TimeoutException or IOException => true,
+            OperationCanceledException => !cancellationToken.IsCancellationRequested,
+            _ => false,
+        };
 }
