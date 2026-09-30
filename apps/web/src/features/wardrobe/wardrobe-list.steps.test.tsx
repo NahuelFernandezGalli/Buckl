@@ -1,9 +1,12 @@
 import { describeFeature, loadFeature } from '@amiceli/vitest-cucumber'
 import { cleanup, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { expect } from 'vitest'
+import { NetworkError } from '../../data/api/api-errors'
 import { InMemoryGarmentRepository } from '../../data/in-memory-garment-repository'
 import { GarmentMother } from '../../test/garment-mother'
 import { renderApp } from '../../test/render-app'
+import { ScriptedGarmentRepository } from '../../test/scripted-garment-repository'
 
 const feature = await loadFeature('./wardrobe-list.feature')
 
@@ -16,6 +19,7 @@ const blueTop = () =>
 describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
   AfterEachScenario(() => cleanup())
 
+  const user = userEvent.setup()
   let repository: InMemoryGarmentRepository
 
   const openWardrobe = () => {
@@ -88,6 +92,30 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
         'href',
         '/wardrobe/blue-top',
       )
+    })
+  })
+
+  Scenario('a wardrobe that could not be loaded loads on the next try', ({ Given, When, Then }) => {
+    Given(
+      'a wardrobe with a blue top whose first load fails because the connection dropped',
+      () => {
+        const scripted = new ScriptedGarmentRepository([blueTop()])
+        scripted.failures.list.push(new NetworkError(new TypeError('Failed to fetch')))
+        repository = scripted
+      },
+    )
+    When('the user opens the wardrobe', openWardrobe)
+    Then('a message says Buckl could not be reached', async () => {
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Could not reach Buckl. Check your connection and try again.',
+      )
+    })
+    When('the user tries again', () =>
+      user.click(screen.getByRole('button', { name: 'Try again' })),
+    )
+    Then('the blue top is listed', async () => {
+      const list = await screen.findByRole('list', { name: 'Garments' })
+      expect(within(list).getByRole('img', { name: 'Blue top' })).toBeVisible()
     })
   })
 })

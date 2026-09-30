@@ -15,7 +15,7 @@ export function WardrobePage() {
   usePageTitle('Wardrobe')
   const [searchParams, setSearchParams] = useSearchParams()
   const filter = useMemo(() => parseWardrobeFilter(searchParams), [searchParams])
-  const wardrobe = useWardrobe(filter)
+  const { state: wardrobe, retry } = useWardrobe(filter)
   const filtering = hasCriteria(filter)
 
   const showWholeWardrobe = () => setSearchParams(clearCriteria(searchParams), { replace: true })
@@ -28,7 +28,14 @@ export function WardrobePage() {
         onChange={(next) => setSearchParams(next, { replace: true })}
       />
       {wardrobe.status === 'loading' && <p role="status">Loading your wardrobe…</p>}
-      {wardrobe.status === 'error' && <p role="alert">{wardrobe.message}</p>}
+      {wardrobe.status === 'error' && (
+        <>
+          <p role="alert">{wardrobe.message}</p>
+          <Button variant="secondary" onClick={retry}>
+            Try again
+          </Button>
+        </>
+      )}
       {wardrobe.status === 'ready' &&
         wardrobe.garments.length === 0 &&
         !filtering &&
