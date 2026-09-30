@@ -1,9 +1,9 @@
 import { useId, type ReactNode } from 'react'
-import { placeholderPhoto } from '../../data/placeholder-photo'
 import { CATEGORY_LABELS, COLOR_LABELS } from '../../domain/classification'
 import type { Garment } from '../../domain/garment'
 import { formatMoney, formatPurchaseDate } from '../../lib/format'
 import { garmentTitle } from '../../lib/garment-title'
+import { GarmentPhoto } from '../wardrobe/GarmentPhoto'
 import styles from './GarmentDetail.module.css'
 import { useProduct } from './useProduct'
 
@@ -28,7 +28,12 @@ export function GarmentDetail({ garment, actions }: GarmentDetailProps) {
         {garment.status === 'archived' && <span className={styles.badge}>Archived</span>}
       </header>
       {actions && <div className={styles.actions}>{actions}</div>}
-      <img src={garment.photoUrl ?? placeholderPhoto(color)} alt={title} className={styles.photo} />
+      <GarmentPhoto
+        photoUrl={garment.photoUrl}
+        color={color}
+        alt={title}
+        className={styles.photo}
+      />
 
       <dl className={styles.facts}>
         <div>
