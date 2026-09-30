@@ -62,9 +62,11 @@ candidate for a later phase.
 
 Photos may show a person, a room or a location. They are private to the owner, served only through
 short-lived signed URLs, and never used for any purpose other than showing the garment to its
-owner. Client-side compression in phase 6 reduces resolution before upload. When a photo is
-replaced or removed, or its garment deleted, the object is hidden in Backblaze B2 at once and the storage
-removes it for good a day later.
+owner. Before upload, the browser crops the photo to the frame the app shows, scales it to at
+most 1080×1350 and re-encodes it, which removes all metadata: no location, camera or time reaches
+Buckl ([ADR-0033](adr/0033-prepare-photos-in-the-browser-before-upload.md)). When a photo is
+replaced or removed, or its garment deleted, the object is hidden in Backblaze B2 at once and the
+storage removes it for good a day later.
 
 ## Changes
 
@@ -76,3 +78,4 @@ removes it for good a day later.
 | 2026-09-25 | Phase 5: clarified that the cached profile stays in the browser until logout.                                               |
 | 2026-09-29 | Phase 6: photos are stored in Backblaze B2 instead of Cloudflare R2.                                                        |
 | 2026-09-29 | Phase 6: photos are uploaded to a staging area that empties itself within two days; replaced or removed photos are deleted. |
+| 2026-09-29 | Phase 6: photos are re-encoded in the browser before upload, without their metadata (GPS location included).                |
