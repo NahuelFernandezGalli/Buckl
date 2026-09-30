@@ -54,6 +54,17 @@ public class ErrorContractTests
     }
 
     [Fact]
+    public async Task A_client_error_without_a_specific_code_is_rejected_not_a_server_error()
+    {
+        using var client = _api.CreateClientFor(Subjects.New());
+
+        using var response = await client.GetAsync(Http.Url("/test/probe/unprocessable"), Ct);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        Assert.Equal("request.rejected", await response.ReadProblemCodeAsync(Ct));
+    }
+
+    [Fact]
     public async Task The_openapi_document_is_served_anonymously_in_development()
     {
         using var client = _api.CreateClient();

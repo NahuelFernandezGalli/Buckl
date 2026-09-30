@@ -143,6 +143,10 @@ lower-case strings, dates are `YYYY-MM-DD`, and timestamps are ISO 8601 in UTC.
 The OpenAPI document declares the bearer token as a security requirement of every operation, so
 the API reference at `/scalar/v1` can send one.
 
+Enumerations in the query string are matched by name, ignoring case; numbers, comma-separated
+lists and repeated parameters are rejected with `request.invalid`. `PATCH` on an archived garment
+answers `409 garment.archived_read_only` whatever the body contains.
+
 `photoUrl` is always `null` until phase 6 attaches photos. Lists are not paginated in v1.
 
 Request bodies are validated for shape only (required properties, known enumeration values);
@@ -154,15 +158,16 @@ so the web app never needs a second request.
 
 Every error is a problem details document (`application/problem+json`) with a `code` extension.
 
-| Status | When                                                             | `code`                                             |
-| ------ | ---------------------------------------------------------------- | -------------------------------------------------- |
-| 400    | Malformed request: missing field, unknown enum value             | `request.invalid`                                  |
-| 400    | Input a domain rule rejects                                      | the domain code, e.g. `money.negative_amount`      |
-| 401    | No or invalid identity                                           | `request.unauthenticated`                          |
-| 404    | Unknown route                                                    | `resource.not_found`                               |
-| 404    | Garment or product the caller cannot see                         | `garment.not_found`, `product.not_found`           |
-| 409    | A rule about the current state, e.g. editing an archived garment | the domain code, e.g. `garment.archived_read_only` |
-| 500    | Anything unexpected; no internal details are returned            | `server.error`                                     |
+| Status | When                                                                                                    | `code`                                             |
+| ------ | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 400    | Malformed request: missing field, unknown enum value                                                    | `request.invalid`                                  |
+| 400    | Input a domain rule rejects                                                                             | the domain code, e.g. `money.negative_amount`      |
+| 401    | No or invalid identity                                                                                  | `request.unauthenticated`                          |
+| 404    | Unknown route                                                                                           | `resource.not_found`                               |
+| 404    | Garment or product the caller cannot see                                                                | `garment.not_found`, `product.not_found`           |
+| 409    | A rule about the current state, e.g. editing an archived garment                                        | the domain code, e.g. `garment.archived_read_only` |
+| 4xx    | Any other client error                                                                                  | `request.rejected`                                 |
+| 500    | Anything unexpected, including a stored row that breaks a domain rule; no internal details are returned | `server.error`                                     |
 
 ## Running locally
 

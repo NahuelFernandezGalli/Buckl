@@ -4,6 +4,7 @@ using Buckl.Infrastructure.Persistence;
 using Buckl.Infrastructure.Persistence.Records;
 using Buckl.Testing;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -23,6 +24,10 @@ public sealed class ProbeController : ControllerBase
     [HttpGet("forbidden")]
     [Authorize(Roles = "nobody")]
     public IActionResult Forbidden() => NoContent();
+
+    /// <summary>Answers a client error the API has no specific code for.</summary>
+    [HttpGet("unprocessable")]
+    public IActionResult Unprocessable() => StatusCode(StatusCodes.Status422UnprocessableEntity);
 
     /// <summary>The user the request is bound to, and the session variable the policies read.</summary>
     [HttpGet("session")]

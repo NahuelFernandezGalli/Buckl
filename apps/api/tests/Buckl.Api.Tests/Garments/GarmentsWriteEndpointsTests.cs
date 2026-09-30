@@ -170,6 +170,19 @@ public class GarmentsWriteEndpointsTests
     }
 
     [Fact]
+    public async Task An_empty_patch_on_an_archived_garment_is_a_conflict()
+    {
+        using var client = _api.CreateClientFor(Subjects.New());
+        var id = await AddOxfordShirtAsync(client);
+        using var archived = await client.PostAsync(Http.Url($"/garments/{id}/archive"), content: null, Ct);
+
+        using var response = await client.PatchAsync(Http.Url($"/garments/{id}"), Http.Json("{}"), Ct);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("garment.archived_read_only", await response.ReadProblemCodeAsync(Ct));
+    }
+
+    [Fact]
     public async Task One_user_can_neither_read_nor_change_another_users_garment()
     {
         using var alice = _api.CreateClientFor(Subjects.New());

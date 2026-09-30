@@ -90,7 +90,7 @@ public sealed class Garment
 
         EnsureOwnedBy(photoKey, ownerId);
 
-        var createdAt = now.ToUniversalTime();
+        var createdAt = Timestamps.Normalize(now);
 
         return new Garment(
             GarmentId.New(),
@@ -213,7 +213,7 @@ public sealed class Garment
         }
 
         Status = GarmentStatus.Archived;
-        ArchivedAt = now.ToUniversalTime();
+        ArchivedAt = Timestamps.Normalize(now);
         Touch(now);
     }
 
@@ -231,7 +231,7 @@ public sealed class Garment
         Touch(now);
     }
 
-    private void Touch(DateTimeOffset now) => UpdatedAt = now.ToUniversalTime();
+    private void Touch(DateTimeOffset now) => UpdatedAt = Timestamps.Normalize(now);
 
     /// <summary>An archived garment is a record, not part of the wardrobe: it must be restored
     /// before it can change.</summary>

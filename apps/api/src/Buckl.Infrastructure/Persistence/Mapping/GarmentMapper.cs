@@ -52,6 +52,20 @@ public static class GarmentMapper
     {
         ArgumentNullException.ThrowIfNull(record);
 
+        try
+        {
+            return Rehydrate(record);
+        }
+        catch (DomainException exception)
+        {
+            throw new CorruptRecordException(
+                $"Garment {record.Id} breaks the domain rule '{exception.Code}'.",
+                exception);
+        }
+    }
+
+    private static Garment Rehydrate(GarmentRecord record)
+    {
         var classification = Classification.Create(
             EnumText.Parse<Category>(record.Category),
             EnumText.Parse<Color>(record.Color),
