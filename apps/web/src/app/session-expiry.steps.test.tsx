@@ -1,9 +1,11 @@
 import { describeFeature, loadFeature } from '@amiceli/vitest-cucumber'
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect } from 'vitest'
+import { SessionExpiredError } from '../session/session'
 import { fakeSession, type FakeSession } from '../test/fake-session'
 import { renderApp } from '../test/render-app'
+import { ScriptedGarmentRepository } from '../test/scripted-garment-repository'
 
 const feature = await loadFeature('./session-expiry.feature')
 
@@ -36,6 +38,23 @@ describeFeature(feature, ({ Scenario, AfterEachScenario }) => {
     Then('no notice about the session is shown', async () => {
       expect(await screen.findByRole('heading', { level: 1, name: 'Wardrobe' })).toBeVisible()
       expect(screen.queryByRole('button', { name: 'Log in again' })).not.toBeInTheDocument()
+    })
+  })
+
+  Scenario('a screen that cannot load does not repeat the notice', ({ Given, Then, And }) => {
+    Given('the session of the user expired while the wardrobe was loading', () => {
+      const garments = new ScriptedGarmentRepository()
+      garments.failures.list.push(new SessionExpiredError())
+      renderApp({ route: '/wardrobe', repositories: { garments }, sessionExpired: true })
+    })
+    Then('the notice is the only alert on the screen', async () => {
+      // The failure has landed once the wardrobe stops loading.
+      await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
+      expect(screen.getAllByRole('alert')).toHaveLength(1)
+      expect(screen.getByRole('alert')).toHaveTextContent('Log in again')
+    })
+    And('there is nothing to try again', () => {
+      expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument()
     })
   })
 })

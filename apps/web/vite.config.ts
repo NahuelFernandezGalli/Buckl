@@ -32,7 +32,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App shell only: the build output. Data and photos are never cached here (phase 6 decides).
+        // App shell only: the build output. API responses and photos are never cached: they are private and
+        // must reflect the latest edit.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: '/index.html',
       },

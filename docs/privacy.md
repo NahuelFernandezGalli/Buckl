@@ -65,8 +65,9 @@ short-lived signed URLs, and never used for any purpose other than showing the g
 owner. Before upload, the browser crops the photo to the frame the app shows, scales it to at
 most 1080×1350 and re-encodes it, which removes all metadata: no location, camera or time reaches
 Buckl ([ADR-0033](adr/0033-prepare-photos-in-the-browser-before-upload.md)). When a photo is
-replaced or removed, or its garment deleted, the object is hidden in Backblaze B2 at once and the
-storage removes it for good a day later.
+replaced or removed, the change is saved first and only then is the object hidden in Backblaze B2,
+and the storage's lifecycle rule removes the hidden version for good a day later. Garments are not
+deleted in v1 except together with the account.
 
 ## Changes
 

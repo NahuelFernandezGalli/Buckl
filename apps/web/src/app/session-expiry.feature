@@ -13,3 +13,8 @@ Feature: Session expiry
   Scenario: a valid session shows no notice
     Given the user is looking at their wardrobe
     Then no notice about the session is shown
+
+  Scenario: a screen that cannot load does not repeat the notice
+    Given the session of the user expired while the wardrobe was loading
+    Then the notice is the only alert on the screen
+    And there is nothing to try again
