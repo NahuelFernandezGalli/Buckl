@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router'
 import { usePageTitle } from '../../app/usePageTitle'
 import { useRepositories } from '../../app/useRepositories'
+import { Button } from '../../components/Button/Button'
 import type { GarmentChanges } from '../../domain/garment-repository'
 import { fromGarment, type GarmentSubmission } from '../add-garment/garment-form'
 import { GarmentForm } from '../add-garment/GarmentForm'
@@ -12,7 +13,7 @@ export function EditGarmentPage() {
   const { garmentId = '' } = useParams()
   const { garments } = useRepositories()
   const navigate = useNavigate()
-  const { state } = useGarment(garmentId)
+  const { state, retry } = useGarment(garmentId)
 
   if (state.status === 'loading') {
     return <p role="status">Loading the garment…</p>
@@ -25,6 +26,9 @@ export function EditGarmentPage() {
       <>
         <h1>Edit garment</h1>
         <p role="alert">{state.message}</p>
+        <Button variant="secondary" onClick={retry}>
+          Try again
+        </Button>
       </>
     )
   }
