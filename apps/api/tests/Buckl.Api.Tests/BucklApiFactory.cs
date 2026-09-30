@@ -22,6 +22,10 @@ public sealed class BucklApiFactory : WebApplicationFactory<Program>, IAsyncLife
 {
     public PostgresDatabase Database { get; } = new();
 
+    /// <summary>The storage every API test uses; <see cref="InMemoryPhotoStorage.Put"/> plays the
+    /// browser's upload.</summary>
+    public InMemoryPhotoStorage Photos { get; } = new();
+
     public async ValueTask InitializeAsync() => await Database.InitializeAsync();
 
     public override async ValueTask DisposeAsync()
@@ -79,6 +83,11 @@ public sealed class BucklApiFactory : WebApplicationFactory<Program>, IAsyncLife
         builder.UseSetting("ConnectionStrings:Buckl", Database.AppConnectionString);
         builder.UseSetting("Auth0:Domain", TestTokens.Domain);
         builder.UseSetting("Auth0:Audience", TestTokens.Audience);
+        builder.UseSetting("PhotoStorage:ServiceUrl", "https://storage.buckl.test");
+        builder.UseSetting("PhotoStorage:Region", "us-test-001");
+        builder.UseSetting("PhotoStorage:Bucket", "buckl-photos-test");
+        builder.UseSetting("PhotoStorage:AccessKeyId", "test");
+        builder.UseSetting("PhotoStorage:SecretAccessKey", "test");
         builder.ConfigureTestServices(services =>
         {
             // Registered after the API's own configuration, so this metadata replaces the download
@@ -87,6 +96,8 @@ public sealed class BucklApiFactory : WebApplicationFactory<Program>, IAsyncLife
                 JwtBearerDefaults.AuthenticationScheme,
                 options => options.Configuration = TestTokens.Configuration);
             services.AddSingleton<TimeProvider>(new FixedTimeProvider(TestClock.Now));
+            // No test of the API talks to storage: the adapter has its own tests (S3PhotoStorageTests).
+            services.AddSingleton<IPhotoStorage>(Photos);
             services.AddControllers().AddApplicationPart(typeof(BucklApiFactory).Assembly);
         });
     }

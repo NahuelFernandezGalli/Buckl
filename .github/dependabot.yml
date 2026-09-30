@@ -33,6 +33,12 @@ updates:
       xunit:
         patterns:
           - 'xunit*'
+      testcontainers:
+        patterns:
+          - 'Testcontainers*'
+      aws:
+        patterns:
+          - 'AWSSDK.*'
       efcore:
         patterns:
           - 'Microsoft.EntityFrameworkCore*'
