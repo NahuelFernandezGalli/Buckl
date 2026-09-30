@@ -1,4 +1,5 @@
 using Buckl.Application.Abstractions;
+using Buckl.Application.Photos;
 using Buckl.Domain.Garments;
 
 namespace Buckl.Application.Garments;
@@ -14,16 +15,24 @@ public sealed class UpdateGarmentHandler
 
     private readonly TimeProvider _time;
 
+    private readonly PhotoAttacher _photos;
+
+    private readonly IAfterCommit _afterCommit;
+
     public UpdateGarmentHandler(
         IGarmentRepository garments,
         IUnitOfWork unitOfWork,
         ICurrentUser currentUser,
-        TimeProvider time)
+        TimeProvider time,
+        PhotoAttacher photos,
+        IAfterCommit afterCommit)
     {
         _garments = garments;
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
         _time = time;
+        _photos = photos;
+        _afterCommit = afterCommit;
     }
 
     public async Task<Garment> HandleAsync(
@@ -58,8 +67,28 @@ public sealed class UpdateGarmentHandler
             garment.UpdateNotes(command.Notes.Value, now);
         }
 
+        var previousPhoto = garment.PhotoKey;
+
+        if (command.Photo.IsSet)
+        {
+            if (command.Photo.Value is { } uploadId)
+            {
+                garment.ReplacePhoto(await _photos.AttachAsync(_currentUser.Id, uploadId, cancellationToken), now);
+            }
+            else
+            {
+                garment.RemovePhoto(now);
+            }
+        }
+
         await _garments.UpdateAsync(garment, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (previousPhoto is not null && previousPhoto != garment.PhotoKey)
+        {
+            // Deleted only once the request's transaction commits: a rollback keeps the old photo.
+            _afterCommit.Enqueue(token => _photos.ReleaseAsync(previousPhoto, token));
+        }
 
         return garment;
     }

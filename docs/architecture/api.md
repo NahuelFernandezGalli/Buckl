@@ -30,16 +30,16 @@ Each use case is one `sealed` handler class in `Buckl.Application`, grouped by a
 on application ports in `Abstractions/` (`ICurrentUser`, `IUnitOfWork`, `IUserTransactionFactory`,
 `IUserProvisioning`, `IPhotoStorage`), never on EF Core or ASP.NET Core.
 
-| Handler                     | Input                            | Output   | Errors                                                                           |
-| --------------------------- | -------------------------------- | -------- | -------------------------------------------------------------------------------- |
-| `ListWardrobeHandler`       | `WardrobeFilter`                 | garments | —                                                                                |
-| `GetGarmentHandler`         | `GarmentId`                      | garment  | `garment.not_found`                                                              |
-| `GetProductHandler`         | `ProductId`                      | product  | `product.not_found`                                                              |
-| `CreateGarmentHandler`      | `CreateGarmentCommand`           | garment  | validation codes of `Classification`, `Size`, `Money`, `PurchaseInfo`, `Garment` |
-| `UpdateGarmentHandler`      | `UpdateGarmentCommand` (partial) | garment  | `garment.not_found`, `garment.archived_read_only`, validation codes              |
-| `ArchiveGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`, `garment.already_archived`                                  |
-| `RestoreGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`, `garment.not_archived`                                      |
-| `RequestPhotoUploadHandler` | `RequestPhotoUploadCommand`      | ticket   | `photo.unsupported_type`, `photo.empty`, `photo.too_large`                       |
+| Handler                     | Input                            | Output   | Errors                                                                                                                |
+| --------------------------- | -------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| `ListWardrobeHandler`       | `WardrobeFilter`                 | garments | —                                                                                                                     |
+| `GetGarmentHandler`         | `GarmentId`                      | garment  | `garment.not_found`                                                                                                   |
+| `GetProductHandler`         | `ProductId`                      | product  | `product.not_found`                                                                                                   |
+| `CreateGarmentHandler`      | `CreateGarmentCommand`           | garment  | validation codes of `Classification`, `Size`, `Money`, `PurchaseInfo`, `Garment`, `photo.upload_not_found`, `photo.*` |
+| `UpdateGarmentHandler`      | `UpdateGarmentCommand` (partial) | garment  | `garment.not_found`, `garment.archived_read_only`, `photo.upload_not_found`, `photo.*`, validation codes              |
+| `ArchiveGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`, `garment.already_archived`                                                                       |
+| `RestoreGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`, `garment.not_archived`                                                                           |
+| `RequestPhotoUploadHandler` | `RequestPhotoUploadCommand`      | ticket   | `photo.unsupported_type`, `photo.empty`, `photo.too_large`                                                            |
 
 A garment that exists but belongs to someone else is reported exactly like one that does not
 exist.
@@ -126,7 +126,8 @@ validation code is the production one; only the source of the keys changes.
    through `IUserProvisioning`, binds `ICurrentUser`, and opens the user-scoped transaction.
 6. The controller action calls one handler; handlers save through `IUnitOfWork`.
 7. Back in the filter, the transaction commits if the action completed, and rolls back if it
-   threw.
+   threw. After a commit, the follow-up work the handlers queued through `IAfterCommit` (deleting
+   a replaced or removed photo) runs; after a rollback it is dropped.
 
 The health endpoint is not an MVC action, so it never opens a transaction.
 
@@ -163,7 +164,14 @@ A photo reaches a garment in three steps ([ADR-0032](../adr/0032-upload-photos-s
 those headers and no token; the garment request then refers to the photo as
 `"photo": { "uploadId": "…" }`.
 
-`photoUrl` is always `null` until phase 6 attaches photos. Lists are not paginated in v1.
+In `POST /garments` and `PATCH /garments/{id}`, `photo` is `{ "uploadId": "…" }` to set or
+replace the photo, and `null` in `PATCH` to remove it; absent, the photo stays as it is. The API
+checks the uploaded object's real size and type, moves it under the owner's photos, and deletes a
+replaced or removed photo after the change commits (a failed deletion is logged and does not fail
+the edit).
+A photo is only moved once every other rule of the request has passed.
+
+`photoUrl` is `null` until read URLs are signed (next change). Lists are not paginated in v1.
 
 Request bodies are validated for shape only (required properties, known enumeration values);
 ranges and formats are the domain's, so a rejected amount or currency comes back with the domain's

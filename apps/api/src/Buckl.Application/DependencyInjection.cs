@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<ArchiveGarmentHandler>();
         services.AddScoped<RestoreGarmentHandler>();
         services.AddScoped<RequestPhotoUploadHandler>();
+        services.AddScoped<PhotoAttacher>();
 
         return services;
     }
