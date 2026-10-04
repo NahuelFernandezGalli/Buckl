@@ -15,6 +15,7 @@ public static class ProblemCodes
         StatusCodes.Status404NotFound => "resource.not_found",
         StatusCodes.Status405MethodNotAllowed => "request.method_not_allowed",
         StatusCodes.Status415UnsupportedMediaType => "request.unsupported_media_type",
+        >= 400 and < 500 => "request.rejected",
         _ => "server.error",
     };
 

@@ -1,6 +1,8 @@
+using Buckl.Domain.Common;
 using Buckl.Domain.Garments;
 using Buckl.Domain.Products;
 using Buckl.Domain.Users;
+using Buckl.Infrastructure.Persistence;
 using Buckl.Infrastructure.Persistence.Mapping;
 using Buckl.Testing;
 
@@ -36,6 +38,19 @@ public class GarmentMapperTests
         var restored = GarmentMapper.ToDomain(GarmentMapper.ToRecord(garment));
 
         GarmentAssertions.Same(garment, restored);
+    }
+
+    [Fact]
+    public void ToDomain_reports_a_row_that_breaks_a_domain_rule_as_corrupt_data()
+    {
+        var record = GarmentMapper.ToRecord(TestGarments.Active(UserId.New()));
+        record.PhotoKey = $"users/{Guid.NewGuid():D}/garments/someone-else.jpg";
+
+        var exception = Assert.Throws<CorruptRecordException>(() => GarmentMapper.ToDomain(record));
+
+        var rule = Assert.IsType<DomainValidationException>(exception.InnerException);
+        Assert.Equal(Garment.Errors.PhotoNotOwned, rule.Code);
+        Assert.DoesNotContain("someone-else", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

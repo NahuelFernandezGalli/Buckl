@@ -26,6 +26,14 @@ public class ProductTests
     }
 
     [Fact]
+    public void Create_records_its_time_to_the_microsecond()
+    {
+        var product = Product.Create("Oxford shirt", ImportSource.Url, TestClock.Now.AddTicks(1_234_567));
+
+        Assert.Equal(TestClock.Now.AddTicks(1_234_560), product.CreatedAt);
+    }
+
+    [Fact]
     public void Create_with_only_required_values_leaves_optionals_null()
     {
         var product = Product.Create("Plain tee", ImportSource.Manual, TestClock.Now);

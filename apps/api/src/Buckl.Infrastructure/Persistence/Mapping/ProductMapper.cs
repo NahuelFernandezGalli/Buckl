@@ -28,13 +28,24 @@ public static class ProductMapper
     {
         ArgumentNullException.ThrowIfNull(record);
 
-        return Product.Rehydrate(new ProductSnapshot(
-            new ProductId(record.Id),
-            record.Name,
-            record.Brand,
-            record.ReferenceImageUrl is null ? null : new Uri(record.ReferenceImageUrl),
-            record.SourceUrl is null ? null : new Uri(record.SourceUrl),
-            EnumText.Parse<ImportSource>(record.Source),
-            record.CreatedAt));
+        try
+        {
+            return Rehydrate(record);
+        }
+        catch (DomainException exception)
+        {
+            throw new CorruptRecordException(
+                $"Product {record.Id} breaks the domain rule '{exception.Code}'.",
+                exception);
+        }
     }
+
+    private static Product Rehydrate(ProductRecord record) => Product.Rehydrate(new ProductSnapshot(
+        new ProductId(record.Id),
+        record.Name,
+        record.Brand,
+        record.ReferenceImageUrl is null ? null : new Uri(record.ReferenceImageUrl),
+        record.SourceUrl is null ? null : new Uri(record.SourceUrl),
+        EnumText.Parse<ImportSource>(record.Source),
+        record.CreatedAt));
 }

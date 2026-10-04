@@ -54,6 +54,8 @@ Invariants:
   `GarmentNotArchivedException`, and any edit on an archived garment throws
   `ArchivedGarmentIsReadOnlyException`.
 - Every mutation stamps `UpdatedAt` with the supplied instant, normalized to UTC.
+- Every instant the domain records (`createdAt`, `updatedAt`, `archivedAt`) is cut to the
+  microsecond and kept in UTC (`Timestamps.Normalize`), the precision Postgres stores.
 - Deleting a garment is not a domain operation in v1; archiving is the way to remove it from the
   wardrobe. Physical deletion happens only with account deletion, described in
   [Privacy and personal data](../privacy.md).
