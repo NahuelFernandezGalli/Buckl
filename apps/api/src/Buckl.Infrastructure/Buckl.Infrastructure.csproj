@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Infrastructure layer: adapters that implement the application's ports. -->
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" />
     <PackageReference Include="EFCore.NamingConventions" />
     <!-- Referenced explicitly so every project resolves EF Core 10.0.12: Npgsql's provider only
          asks for 10.0.4 and the mismatch with the Design package fails the build (MSB3277). -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
   <ItemGroup>
