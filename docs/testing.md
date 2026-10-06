@@ -68,6 +68,13 @@ tests are about.
   invalid ones, changing one property of a valid token. Token lifetimes use the real clock,
   because the JWT handler does.
 
+### Photo storage
+
+Tests of the API and of the use cases use `InMemoryPhotoStorage` (`Buckl.Testing`), whose signed
+URLs are readable fakes and whose `Put` plays the browser's upload. `S3PhotoStorageTests` run the
+real adapter against Floci, an S3 emulator started by Testcontainers (`S3Emulator`); MinIO no
+longer publishes images.
+
 ## The front-end cycle
 
 Every feature that changes what a user can see or do goes through four steps, in this order. The

@@ -118,8 +118,8 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 
 - The web bundle is public. It contains only public configuration: Auth0 domain, client id,
   audience and the API base URL, as `VITE_` variables.
-- Real secrets (database connection strings, R2 access keys from phase 6) live only in the API's
-  environment: user secrets locally, the host's secret store when deployed. `.env` files are
+- Real secrets (database connection strings, the Backblaze B2 application key) live only in the
+  API's environment: user secrets locally, the host's secret store when deployed. `.env` files are
   ignored by git; `.env.example` files document the names without values.
 - Every variable, where it comes from and whether it is secret: [Configuration](../configuration.md).
 - CI runs gitleaks on every pull request and weekly, and GitHub push protection blocks known
@@ -127,11 +127,15 @@ The full DDL, roles and grants are in [Database schema](database-schema.md).
 
 ## Photos
 
-- The browser never receives storage credentials. To upload, the web app asks the API for a
-  presigned PUT URL limited to a size, a content type and a key under `users/<userId>/`. To
-  display, the API returns short-lived presigned GET URLs.
-- Object keys embed the owner id so a key never points into another user's prefix, and the API
-  checks the prefix before signing.
+- The browser never receives storage credentials. It asks the API for an upload ticket: a PUT
+  URL signed for one staging key (`uploads/<userId>/<uploadId>`), one content type and ten
+  minutes ([ADR-0032](../adr/0032-upload-photos-straight-to-storage-through-a-staging-prefix.md)).
+- A garment only points at a photo the API checked: the API derives the staging key from the
+  caller, reads the stored object's real size and type, and copies it under `users/<userId>/`
+  before saving the key. The domain and a database check constraint both require that prefix.
+- Photos are read through presigned GET URLs valid for one hour. Anyone holding such a URL can
+  open that one photo until it expires; URLs are never logged.
+- The storage application key can read and write only the photos bucket.
 
 ## Transport and headers
 

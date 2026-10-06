@@ -1,6 +1,6 @@
 # ADR-0005: Use Cloudflare R2 for photo storage
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0031](0031-store-photos-in-backblaze-b2.md)
 - **Date:** 2026-09-07
 - **Deciders:** NahuelFernandezGalli
 
