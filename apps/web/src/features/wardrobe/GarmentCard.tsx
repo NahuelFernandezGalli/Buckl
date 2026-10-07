@@ -1,9 +1,9 @@
 import { Link } from 'react-router'
 import { Card } from '../../components/Card/Card'
-import { placeholderPhoto } from '../../data/placeholder-photo'
 import { CATEGORY_LABELS, COLOR_LABELS } from '../../domain/classification'
 import type { Garment } from '../../domain/garment'
 import { garmentTitle } from '../../lib/garment-title'
+import { GarmentPhoto } from './GarmentPhoto'
 import styles from './GarmentCard.module.css'
 
 export interface GarmentCardProps {
@@ -16,8 +16,9 @@ export function GarmentCard({ garment }: GarmentCardProps) {
     <li className={styles.item}>
       <Link to={`/wardrobe/${garment.id}`} className={styles.link}>
         <Card>
-          <img
-            src={garment.photoUrl ?? placeholderPhoto(color)}
+          <GarmentPhoto
+            photoUrl={garment.photoUrl}
+            color={color}
             alt={garmentTitle(garment)}
             className={styles.photo}
           />
