@@ -58,7 +58,7 @@ A named combination of garments a user puts together for an occasion. An outfit 
 garments; it does not copy them. See also: Wear log.
 
 **Photo** — `PhotoKey`
-The picture of a garment taken by the user. The file lives in object storage (Cloudflare R2); the
+The picture of a garment taken by the user. The file lives in object storage (Backblaze B2); the
 garment stores only the object key. The app never exposes storage credentials to the browser; it
 serves short-lived signed URLs instead.
 

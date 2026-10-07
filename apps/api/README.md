@@ -41,16 +41,40 @@ dotnet user-secrets set "Auth0:Domain" "<tenant>.us.auth0.com" --project src/Buc
 dotnet user-secrets set "Auth0:Audience" "https://api.buckl.app" --project src/Buckl.Api
 ```
 
+The photo bucket's endpoint, region, name and application key. Without them the API refuses to
+start and names the missing keys. The bucket, its CORS rule and its lifecycle rule are described
+in [Configuration](../../docs/configuration.md#photo-storage):
+
+```bash
+dotnet user-secrets set "PhotoStorage:ServiceUrl" "https://s3.<region>.backblazeb2.com" --project src/Buckl.Api
+```
+
+```bash
+dotnet user-secrets set "PhotoStorage:Region" "<region>" --project src/Buckl.Api
+```
+
+```bash
+dotnet user-secrets set "PhotoStorage:Bucket" "<bucket>" --project src/Buckl.Api
+```
+
+```bash
+dotnet user-secrets set "PhotoStorage:AccessKeyId" "<keyID>" --project src/Buckl.Api
+```
+
+```bash
+dotnet user-secrets set "PhotoStorage:SecretAccessKey" "<applicationKey>" --project src/Buckl.Api
+```
+
 Then:
 
 ```bash
 dotnet run --project src/Buckl.Api
 ```
 
-The API listens on `http://localhost:5080`. It refuses to start if the Auth0 settings are missing
-or malformed, and answers `401` to any request without a valid access token except `GET /health`.
-In Development it accepts browser calls from the web app at `http://localhost:5173` and
-`http://localhost:4173` (`appsettings.Development.json`).
+The API listens on `http://localhost:5080`. It refuses to start if the Auth0 or photo storage
+settings are missing or malformed, and answers `401` to any request without a valid access token
+except `GET /health`. In Development it accepts browser calls from the web app at
+`http://localhost:5173` and `http://localhost:4173` (`appsettings.Development.json`).
 
 `src/Buckl.Api/Buckl.Api.http` walks through the whole flow for two users. It reads their access
 tokens from `src/Buckl.Api/.env`, which git ignores:
@@ -62,8 +86,9 @@ BOB_TOKEN=<access token of the second test user>
 
 To get a token, sign in to the web app at `http://localhost:5173` as that user, open the browser's
 developer tools, and copy `access_token` from the response of the `oauth/token` request. Tokens
-expire after an hour. Never paste a token into an online decoder. The API reference is at
-`http://localhost:5080/scalar/v1`.
+expire after an hour. Never paste a token into an online decoder. The photo requests in the file
+upload `src/Buckl.Api/sample-photo.jpg`, which is any JPEG of your own; git ignores it. The API
+reference is at `http://localhost:5080/scalar/v1`.
 
 ## Database migrations
 

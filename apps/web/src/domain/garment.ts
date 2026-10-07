@@ -12,7 +12,7 @@ export const MAX_NOTES_LENGTH = 500
 export interface Garment {
   id: string
   productId: string | null
-  /** Where the photo can be loaded from: a signed URL from the API, or a data URL in phase 3. */
+  /** Where the photo can be loaded from: a signed URL from the API (a data URL only in the in-memory repository the tests use). */
   photoUrl: string | null
   classification: Classification
   purchaseInfo: PurchaseInfo | null

@@ -7,7 +7,11 @@ import { SessionContext } from './SessionContext'
 
 export interface Auth0SessionProviderProps {
   settings: Auth0Settings
-  /** Called once Auth0 has sent the user back signed in, with the in-app path to show. */
+  /**
+   * Called once Auth0 has sent the user back signed in, with the in-app path to show. Must be
+   * stable: Auth0 keeps the function of the first render (`App` closes over its router, which
+   * never changes).
+   */
   onSignedIn: (returnTo: string) => void
   children: ReactNode
 }

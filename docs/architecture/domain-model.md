@@ -40,7 +40,7 @@ Behavior:
 
 - `Garment.Create(ownerId, classification, source, now, photoKey?, purchaseInfo?, productId?, notes?)`
 - `UpdateClassification(classification, now)`, `UpdatePurchaseInfo(purchaseInfo?, now)`,
-  `ReplacePhoto(photoKey, now)`, `UpdateNotes(notes?, now)`
+  `ReplacePhoto(photoKey, now)`, `RemovePhoto(now)`, `UpdateNotes(notes?, now)`
 - `Archive(now)`, `Restore(now)`
 
 Invariants:
@@ -81,16 +81,17 @@ API writes them as a side effect of imports. A product row carries no personal d
 
 ## Value objects
 
-| Value object    | Shape                                | Validation                                                                                                                                                                                 |
-| --------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Money`         | `decimal Amount`, `string Currency`  | Amount not negative, at most 2 decimals, at most 9 999 999 999.99 (`numeric(12,2)`); currency trimmed, upper-cased, three ASCII letters (ISO 4217 format; list membership is not checked). |
-| `PurchaseInfo`  | `Money Price`, `DateOnly Date`       | Date not after the caller-supplied today.                                                                                                                                                  |
-| `Category`      | enumeration                          | Fixed set defined in the domain: `Top`, `Bottom`, `Dress`, `Outerwear`, `Footwear`, `Accessory`. Finer sub-types may be added in phase 2.                                                  |
-| `Color`         | C# `enum`, stored as lower-case text | Fixed palette defined in the domain: black, white, grey, navy, blue, red, green, yellow, brown, beige, pink, purple, orange, multicolor.                                                   |
-| `Size`          | `string Label`                       | 1 to 20 characters, trimmed, kept as the user or store states it.                                                                                                                          |
-| `ImportSource`  | C# `enum`, stored as lower-case text | `Manual`, `Url`, `Email`.                                                                                                                                                                  |
-| `GarmentStatus` | C# `enum`, stored as lower-case text | `Active`, `Archived`.                                                                                                                                                                      |
-| `PhotoKey`      | `string Value`, `UserId OwnerId`     | Object key, at most 512 characters, must start with `users/<userId>/` and carry a name after it. Verified by the domain on creation and by the API when issuing upload URLs.               |
+| Value object    | Shape                                                 | Validation                                                                                                                                                                                                                                                                              |
+| --------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Money`         | `decimal Amount`, `string Currency`                   | Amount not negative, at most 2 decimals, at most 9 999 999 999.99 (`numeric(12,2)`); currency trimmed, upper-cased, three ASCII letters (ISO 4217 format; list membership is not checked).                                                                                              |
+| `PurchaseInfo`  | `Money Price`, `DateOnly Date`                        | Date not after the caller-supplied today.                                                                                                                                                                                                                                               |
+| `Category`      | enumeration                                           | Fixed set defined in the domain: `Top`, `Bottom`, `Dress`, `Outerwear`, `Footwear`, `Accessory`. Finer sub-types may be added in phase 2.                                                                                                                                               |
+| `Color`         | C# `enum`, stored as lower-case text                  | Fixed palette defined in the domain: black, white, grey, navy, blue, red, green, yellow, brown, beige, pink, purple, orange, multicolor.                                                                                                                                                |
+| `Size`          | `string Label`                                        | 1 to 20 characters, trimmed, kept as the user or store states it.                                                                                                                                                                                                                       |
+| `ImportSource`  | C# `enum`, stored as lower-case text                  | `Manual`, `Url`, `Email`.                                                                                                                                                                                                                                                               |
+| `GarmentStatus` | C# `enum`, stored as lower-case text                  | `Active`, `Archived`.                                                                                                                                                                                                                                                                   |
+| `PhotoKey`      | `string Value`, `UserId OwnerId`                      | Object key, at most 512 characters, must start with `users/<userId>/` and carry a name after it. Built and verified when a photo is attached; tickets sign `uploads/*` keys. `PhotoKey.ForGarmentPhoto(ownerId, photoId, file)` builds `users/<userId>/garments/<photoId>.<extension>`. |
+| `PhotoFile`     | `string ContentType`, `string Extension`, `long Size` | JPEG, PNG or WebP, 1 byte to 5 MiB; the type is matched ignoring case and kept in canonical form.                                                                                                                                                                                       |
 
 ### Implementation conventions
 
@@ -114,8 +115,8 @@ API writes them as a side effect of imports. A product row carries no personal d
   constants on the type that raises them (`Money.Errors.NegativeAmount`) and are listed under
   [error codes](#error-codes).
 - The web app keeps a TypeScript read model of these types in `apps/web/src/domain`
-  ([Web app](web-app.md)). It is maintained by hand until phase 6 derives it from the API's
-  OpenAPI document.
+  ([Web app](web-app.md)). It is maintained by hand, pinned by tests on both sides
+  ([ADR-0034](../adr/0034-mirror-the-api-contract-by-hand-in-the-web-app.md)).
 
 ## Ports
 
@@ -155,40 +156,43 @@ and Row-Level Security policies, is in [Database schema](database-schema.md). `o
 Every code the domain can raise, so the API can map them to problem details without matching on
 message text. The table grows with each pull request that adds a rule.
 
-| Code                                   | Raised by                                                       | Meaning                                              |
-| -------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
-| `money.negative_amount`                | `Money.Create`                                                  | Amount below zero                                    |
-| `money.too_many_decimals`              | `Money.Create`                                                  | More than two decimal places                         |
-| `money.amount_too_large`               | `Money.Create`                                                  | Above `numeric(12,2)` capacity                       |
-| `money.invalid_currency`               | `Money.Create`                                                  | Not three ASCII letters                              |
-| `purchase_info.date_in_future`         | `PurchaseInfo.Create`                                           | Purchase date after today                            |
-| `size.empty`                           | `Size.Create`                                                   | Blank size label                                     |
-| `size.too_long`                        | `Size.Create`                                                   | Size label over 20 characters                        |
-| `classification.unknown_category`      | `Classification.Create`                                         | Category outside the enum                            |
-| `classification.unknown_color`         | `Classification.Create`                                         | Color outside the enum                               |
-| `product_id.empty`                     | `ProductId` constructor                                         | Empty GUID                                           |
-| `product.name_empty`                   | `Product.Create`, `Product.Rehydrate`                           | Blank name                                           |
-| `product.name_too_long`                | `Product.Create`, `Product.Rehydrate`                           | Name over 200 characters                             |
-| `product.brand_too_long`               | `Product.Create`, `Product.Rehydrate`                           | Brand over 100 characters                            |
-| `product.image_url_not_https`          | `Product.Create`, `Product.Rehydrate`                           | Image URL not absolute https                         |
-| `product.source_url_invalid`           | `Product.Create`, `Product.Rehydrate`                           | Source URL not absolute http or https                |
-| `product.unknown_source`               | `Product.Create`, `Product.Rehydrate`                           | Import source outside the enum                       |
-| `user_id.empty`                        | `UserId` constructor                                            | Empty GUID                                           |
-| `garment_id.empty`                     | `GarmentId` constructor                                         | Empty GUID                                           |
-| `photo_key.empty`                      | `PhotoKey.Create`, `PhotoKey.Parse`                             | Blank key                                            |
-| `photo_key.too_long`                   | `PhotoKey.Create`, `PhotoKey.Parse`                             | Key over 512 characters                              |
-| `photo_key.outside_owner_prefix`       | `PhotoKey.Create`, `PhotoKey.Parse`                             | Key not under `users/<ownerId>/`                     |
-| `garment.unknown_source`               | `Garment.Create`, `Garment.Rehydrate`                           | Import source outside the enum                       |
-| `garment.photo_not_owned`              | `Garment.Create`, `Garment.Rehydrate`                           | Photo belongs to another user                        |
-| `garment.notes_too_long`               | `Garment.Create`, `Garment.Rehydrate`                           | Notes over 500 characters                            |
-| `garment.unknown_status`               | `Garment.Rehydrate`                                             | Stored status outside the enum                       |
-| `garment.inconsistent_archive_state`   | `Garment.Rehydrate`                                             | Archive time does not match status                   |
-| `garment.updated_before_created`       | `Garment.Rehydrate`                                             | Update time before creation time                     |
-| `garment.already_archived`             | `Garment.Archive`                                               | Archiving an archived garment                        |
-| `garment.not_archived`                 | `Garment.Restore`                                               | Restoring an active garment                          |
-| `garment.archived_read_only`           | `Garment.Update*`, `Garment.ReplacePhoto`                       | Editing an archived garment                          |
-| `garment.not_found`                    | Web app `GarmentNotFoundError`; the API as a `404` from phase 4 | Garment does not exist or is not visible to the user |
-| `wardrobe_filter.search_text_too_long` | `WardrobeFilter.SearchText`                                     | Search text over 100 characters                      |
+| Code                                   | Raised by                                                        | Meaning                                              |
+| -------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------- |
+| `money.negative_amount`                | `Money.Create`                                                   | Amount below zero                                    |
+| `money.too_many_decimals`              | `Money.Create`                                                   | More than two decimal places                         |
+| `money.amount_too_large`               | `Money.Create`                                                   | Above `numeric(12,2)` capacity                       |
+| `money.invalid_currency`               | `Money.Create`                                                   | Not three ASCII letters                              |
+| `purchase_info.date_in_future`         | `PurchaseInfo.Create`                                            | Purchase date after today                            |
+| `size.empty`                           | `Size.Create`                                                    | Blank size label                                     |
+| `size.too_long`                        | `Size.Create`                                                    | Size label over 20 characters                        |
+| `classification.unknown_category`      | `Classification.Create`                                          | Category outside the enum                            |
+| `classification.unknown_color`         | `Classification.Create`                                          | Color outside the enum                               |
+| `product_id.empty`                     | `ProductId` constructor                                          | Empty GUID                                           |
+| `product.name_empty`                   | `Product.Create`, `Product.Rehydrate`                            | Blank name                                           |
+| `product.name_too_long`                | `Product.Create`, `Product.Rehydrate`                            | Name over 200 characters                             |
+| `product.brand_too_long`               | `Product.Create`, `Product.Rehydrate`                            | Brand over 100 characters                            |
+| `product.image_url_not_https`          | `Product.Create`, `Product.Rehydrate`                            | Image URL not absolute https                         |
+| `product.source_url_invalid`           | `Product.Create`, `Product.Rehydrate`                            | Source URL not absolute http or https                |
+| `product.unknown_source`               | `Product.Create`, `Product.Rehydrate`                            | Import source outside the enum                       |
+| `user_id.empty`                        | `UserId` constructor                                             | Empty GUID                                           |
+| `garment_id.empty`                     | `GarmentId` constructor                                          | Empty GUID                                           |
+| `photo_key.empty`                      | `PhotoKey.Create`, `PhotoKey.Parse`, `PhotoKey.ForGarmentPhoto`  | Blank key                                            |
+| `photo_key.too_long`                   | `PhotoKey.Create`, `PhotoKey.Parse`                              | Key over 512 characters                              |
+| `photo_key.outside_owner_prefix`       | `PhotoKey.Create`, `PhotoKey.Parse`                              | Key not under `users/<ownerId>/`                     |
+| `photo.unsupported_type`               | `PhotoFile.Create`                                               | Not JPEG, PNG or WebP                                |
+| `photo.empty`                          | `PhotoFile.Create`                                               | Size zero or negative                                |
+| `photo.too_large`                      | `PhotoFile.Create`                                               | Size over 5 MiB                                      |
+| `garment.unknown_source`               | `Garment.Create`, `Garment.Rehydrate`                            | Import source outside the enum                       |
+| `garment.photo_not_owned`              | `Garment.Create`, `Garment.Rehydrate`                            | Photo belongs to another user                        |
+| `garment.notes_too_long`               | `Garment.Create`, `Garment.Rehydrate`                            | Notes over 500 characters                            |
+| `garment.unknown_status`               | `Garment.Rehydrate`                                              | Stored status outside the enum                       |
+| `garment.inconsistent_archive_state`   | `Garment.Rehydrate`                                              | Archive time does not match status                   |
+| `garment.updated_before_created`       | `Garment.Rehydrate`                                              | Update time before creation time                     |
+| `garment.already_archived`             | `Garment.Archive`                                                | Archiving an archived garment                        |
+| `garment.not_archived`                 | `Garment.Restore`                                                | Restoring an active garment                          |
+| `garment.archived_read_only`           | `Garment.Update*`, `Garment.ReplacePhoto`, `Garment.RemovePhoto` | Editing an archived garment                          |
+| `garment.not_found`                    | Web app `GarmentNotFoundError`; the API as a `404` from phase 4  | Garment does not exist or is not visible to the user |
+| `wardrobe_filter.search_text_too_long` | `WardrobeFilter.SearchText`                                      | Search text over 100 characters                      |
 
 The application layer adds two codes for resources the current user cannot see, whether they do
 not exist or Row-Level Security hides them. The API maps both to `404`.

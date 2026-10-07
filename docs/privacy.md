@@ -19,7 +19,8 @@ the same pull request as any change that adds, moves or removes personal data.
 | Auth0 subject (`sub`), internal user id and creation time               | Neon (`users`)                           | Link garments and outfits to their owner; nothing else from the token (name, email, picture) is stored | Until account deletion                                                                                                                                    |
 | Garment classification, notes, status                                   | Neon (`garments`)                        | The wardrobe itself                                                                                    | Until the user archives or deletes the garment                                                                                                            |
 | Purchase price, currency and date                                       | Neon (`garments`)                        | Show what was paid; imports fill it in                                                                 | Until the garment is deleted                                                                                                                              |
-| Garment photos                                                          | Cloudflare R2                            | Show the garment                                                                                       | Until the garment is deleted                                                                                                                              |
+| Garment photos                                                          | Backblaze B2                             | Show the garment                                                                                       | Until the user replaces or removes the photo, or the account is deleted                                                                                   |
+| Photos being uploaded (not yet part of a garment)                       | Backblaze B2 (`uploads/<userId>/`)       | Let the browser upload without passing the photo through the API                                       | Hidden after one day and deleted the day after                                                                                                            |
 | Product catalog data (brand, name, image URL, source URL)               | Neon (`products`)                        | Shared, impersonal reference                                                                           | Indefinite; not linked to a person                                                                                                                        |
 | Outfits and wear log _(phase 8)_                                        | Neon                                     | Suggestions and history                                                                                | Until account deletion                                                                                                                                    |
 | Product URLs shared for import _(phase 7)_                              | Neon (`products.source_url`)             | Re-open the product page                                                                               | Indefinite; the URL is public                                                                                                                             |
@@ -31,13 +32,13 @@ Buckl does not use analytics, advertising identifiers or third-party tracking sc
 
 ## Third parties (processors)
 
-| Service       | Data                           | Location and notes                             |
-| ------------- | ------------------------------ | ---------------------------------------------- |
-| Auth0         | Identity and login             | Managed identity provider                      |
-| Neon          | Database rows                  | Managed Postgres; region chosen at creation    |
-| Cloudflare R2 | Photos                         | Object storage; private bucket, presigned URLs |
-| Static host   | None; serves public assets     | Cloudflare Pages or equivalent                 |
-| API host      | Processes requests, keeps logs | Chosen in phase 9                              |
+| Service      | Data                           | Location and notes                                |
+| ------------ | ------------------------------ | ------------------------------------------------- |
+| Auth0        | Identity and login             | Managed identity provider                         |
+| Neon         | Database rows                  | Managed Postgres; region chosen at creation       |
+| Backblaze B2 | Photos                         | Private bucket, encrypted at rest, presigned URLs |
+| Static host  | None; serves public assets     | Cloudflare Pages or equivalent                    |
+| API host     | Processes requests, keeps logs | Chosen in phase 9                                 |
 
 ## Access
 
@@ -50,7 +51,8 @@ Buckl does not use analytics, advertising identifiers or third-party tracking sc
 Account deletion, performed manually by the maintainer on request in v1:
 
 1. Delete the user's garments, outfits and wear logs in Neon, cascading from `users`.
-2. Delete every object under `users/<userId>/` in Cloudflare R2.
+2. Delete every object under `users/<userId>/` and `uploads/<userId>/` in Backblaze B2. Deleting
+   hides an object there, and a lifecycle rule removes the hidden version a day later.
 3. Delete the user in Auth0.
 
 Products stay because they carry no personal data. A self-service "delete my account" action is a
@@ -60,13 +62,21 @@ candidate for a later phase.
 
 Photos may show a person, a room or a location. They are private to the owner, served only through
 short-lived signed URLs, and never used for any purpose other than showing the garment to its
-owner. Client-side compression in phase 6 reduces resolution before upload.
+owner. Before upload, the browser crops the photo to the frame the app shows, scales it to at
+most 1080×1350 and re-encodes it, which removes all metadata: no location, camera or time reaches
+Buckl ([ADR-0033](adr/0033-prepare-photos-in-the-browser-before-upload.md)). When a photo is
+replaced or removed, the change is saved first and only then is the object hidden in Backblaze B2,
+and the storage's lifecycle rule removes the hidden version for good a day later. Garments are not
+deleted in v1 except together with the account.
 
 ## Changes
 
-| Date       | Change                                                                                        |
-| ---------- | --------------------------------------------------------------------------------------------- |
-| 2026-09-07 | Initial version, before any data exists.                                                      |
-| 2026-09-25 | Phase 5: the API stores only the Auth0 subject of each user, from the validated access token. |
-| 2026-09-25 | Phase 5: the web app keeps the Auth0 tokens in the browser's local storage.                   |
-| 2026-09-25 | Phase 5: clarified that the cached profile stays in the browser until logout.                 |
+| Date       | Change                                                                                                                      |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-07 | Initial version, before any data exists.                                                                                    |
+| 2026-09-25 | Phase 5: the API stores only the Auth0 subject of each user, from the validated access token.                               |
+| 2026-09-25 | Phase 5: the web app keeps the Auth0 tokens in the browser's local storage.                                                 |
+| 2026-09-25 | Phase 5: clarified that the cached profile stays in the browser until logout.                                               |
+| 2026-09-29 | Phase 6: photos are stored in Backblaze B2 instead of Cloudflare R2.                                                        |
+| 2026-09-29 | Phase 6: photos are uploaded to a staging area that empties itself within two days; replaced or removed photos are deleted. |
+| 2026-09-29 | Phase 6: photos are re-encoded in the browser before upload, without their metadata (GPS location included).                |

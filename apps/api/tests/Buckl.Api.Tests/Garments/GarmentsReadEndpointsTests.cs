@@ -184,4 +184,22 @@ public class GarmentsReadEndpointsTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("product.not_found", await response.ReadProblemCodeAsync(Ct));
     }
+
+    [Fact]
+    public async Task A_garment_with_a_photo_is_served_with_a_url_that_works_for_an_hour()
+    {
+        var subject = Subjects.New();
+        var owner = await _api.ProvisionAsync(subject, Ct);
+        var photo = TestGarments.PhotoFor(owner);
+        var garment = TestGarments.Active(owner, photoKey: photo);
+        await _api.SeedAsync(owner, [garment], Ct);
+        using var client = _api.CreateClientFor(subject);
+        var expected = InMemoryPhotoStorage.ReadUrlFor(photo.Value, TestClock.Now.AddHours(1)).AbsoluteUri;
+
+        using var list = await client.GetAsync(Http.Url("/garments"), Ct);
+        using var detail = await client.GetAsync(Http.Url($"/garments/{garment.Id.Value}"), Ct);
+
+        Assert.Equal(expected, (await list.ReadJsonAsync(Ct))[0].GetProperty("photoUrl").GetString());
+        Assert.Equal(expected, (await detail.ReadJsonAsync(Ct)).GetProperty("photoUrl").GetString());
+    }
 }

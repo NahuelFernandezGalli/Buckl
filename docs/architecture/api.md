@@ -7,13 +7,13 @@ Core controllers, EF Core on Postgres and xUnit v3; testing follows
 
 ## Projects
 
-| Project                    | Depends on                  | Responsibility                                                      |
-| -------------------------- | --------------------------- | ------------------------------------------------------------------- |
-| `src/Buckl.Domain`         | nothing                     | Aggregates, value objects, rules and repository ports (phase 2)     |
-| `src/Buckl.Application`    | Domain                      | One handler per use case and the ports they need                    |
-| `src/Buckl.Infrastructure` | Application                 | EF Core persistence, migrations, Row-Level Security session binding |
-| `src/Buckl.Api`            | Application, Infrastructure | Controllers, authentication, error mapping; composition root        |
-| `tests/Buckl.*.Tests`      | the layer under test        | One test project per layer, plus `Buckl.Architecture.Tests`         |
+| Project                    | Depends on                  | Responsibility                                                                     |
+| -------------------------- | --------------------------- | ---------------------------------------------------------------------------------- |
+| `src/Buckl.Domain`         | nothing                     | Aggregates, value objects, rules and repository ports (phase 2)                    |
+| `src/Buckl.Application`    | Domain                      | One handler per use case and the ports they need                                   |
+| `src/Buckl.Infrastructure` | Application                 | EF Core persistence, migrations, Row-Level Security session binding, photo storage |
+| `src/Buckl.Api`            | Application, Infrastructure | Controllers, authentication, error mapping; composition root                       |
+| `tests/Buckl.*.Tests`      | the layer under test        | One test project per layer, plus `Buckl.Architecture.Tests`                        |
 
 `Buckl.Architecture.Tests` fails the build if a layer references one it must not, or if the domain
 or the application reference EF Core, Npgsql or ASP.NET Core.
@@ -26,19 +26,20 @@ or the application reference EF Core, Npgsql or ASP.NET Core.
 ## Use cases
 
 Each use case is one `sealed` handler class in `Buckl.Application`, grouped by aggregate
-(`Garments/`, `Products/`), with a single `HandleAsync` method. Handlers depend on domain ports and
+(`Garments/`, `Products/`, `Photos/`), with a single `HandleAsync` method. Handlers depend on domain ports and
 on application ports in `Abstractions/` (`ICurrentUser`, `IUnitOfWork`, `IUserTransactionFactory`,
-`IUserProvisioning`), never on EF Core or ASP.NET Core.
+`IUserProvisioning`, `IPhotoStorage`, `IAfterCommit`), never on EF Core or ASP.NET Core.
 
-| Handler                 | Input                            | Output   | Errors                                                                           |
-| ----------------------- | -------------------------------- | -------- | -------------------------------------------------------------------------------- |
-| `ListWardrobeHandler`   | `WardrobeFilter`                 | garments | —                                                                                |
-| `GetGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`                                                              |
-| `GetProductHandler`     | `ProductId`                      | product  | `product.not_found`                                                              |
-| `CreateGarmentHandler`  | `CreateGarmentCommand`           | garment  | validation codes of `Classification`, `Size`, `Money`, `PurchaseInfo`, `Garment` |
-| `UpdateGarmentHandler`  | `UpdateGarmentCommand` (partial) | garment  | `garment.not_found`, `garment.archived_read_only`, validation codes              |
-| `ArchiveGarmentHandler` | `GarmentId`                      | garment  | `garment.not_found`, `garment.already_archived`                                  |
-| `RestoreGarmentHandler` | `GarmentId`                      | garment  | `garment.not_found`, `garment.not_archived`                                      |
+| Handler                     | Input                            | Output   | Errors                                                                                                                |
+| --------------------------- | -------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| `ListWardrobeHandler`       | `WardrobeFilter`                 | garments | —                                                                                                                     |
+| `GetGarmentHandler`         | `GarmentId`                      | garment  | `garment.not_found`                                                                                                   |
+| `GetProductHandler`         | `ProductId`                      | product  | `product.not_found`                                                                                                   |
+| `CreateGarmentHandler`      | `CreateGarmentCommand`           | garment  | validation codes of `Classification`, `Size`, `Money`, `PurchaseInfo`, `Garment`, `photo.upload_not_found`, `photo.*` |
+| `UpdateGarmentHandler`      | `UpdateGarmentCommand` (partial) | garment  | `garment.not_found`, `garment.archived_read_only`, `photo.upload_not_found`, `photo.*`, validation codes              |
+| `ArchiveGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`, `garment.already_archived`                                                                       |
+| `RestoreGarmentHandler`     | `GarmentId`                      | garment  | `garment.not_found`, `garment.not_archived`                                                                           |
+| `RequestPhotoUploadHandler` | `RequestPhotoUploadCommand`      | ticket   | `photo.unsupported_type`, `photo.empty`, `photo.too_large`                                                            |
 
 A garment that exists but belongs to someone else is reported exactly like one that does not
 exist.
@@ -82,6 +83,22 @@ Handlers persist through `IUnitOfWork.SaveChangesAsync`, which writes inside tha
 they never commit. The integration tests prove that a committed user does not leak into the next
 use of a pooled connection.
 
+## Photo storage
+
+`IPhotoStorage` (in `Buckl.Application/Abstractions`) signs upload and read URLs and finds, copies
+and deletes objects. `Buckl.Infrastructure/Storage/S3PhotoStorage` implements it over the AWS SDK
+for Backblaze B2 ([ADR-0032](../adr/0032-upload-photos-straight-to-storage-through-a-staging-prefix.md)).
+Signing is local and costs no request. `PhotoStorage:*` is validated when the host starts. Tests
+of the API use `InMemoryPhotoStorage`; only the adapter's own tests talk to an S3 emulator.
+Anything that goes wrong reaching storage (a service error, a timeout, a dropped connection) is
+reported as `PhotoStorageException`; a cancellation by the caller passes through unchanged.
+
+`IAfterCommit` (also in `Abstractions`) queues follow-up work that must not happen unless the
+request's transaction commits, such as deleting a photo a saved edit no longer uses.
+`UserTransactionFilter` runs the queue after the commit and drops it on a rollback. Each action is
+isolated: one that throws is logged as a warning (its exception type only, never a key) and the next
+still runs, so cleanup can never turn a committed request into an error.
+
 ## Authentication
 
 Every endpoint requires a valid Auth0 access token unless it opts out explicitly
@@ -117,7 +134,8 @@ validation code is the production one; only the source of the keys changes.
    through `IUserProvisioning`, binds `ICurrentUser`, and opens the user-scoped transaction.
 6. The controller action calls one handler; handlers save through `IUnitOfWork`.
 7. Back in the filter, the transaction commits if the action completed, and rolls back if it
-   threw.
+   threw. After a commit, the follow-up work the handlers queued through `IAfterCommit` (deleting
+   a replaced or removed photo) runs; after a rollback it is dropped.
 
 The health endpoint is not an MVC action, so it never opens a transaction.
 
@@ -127,18 +145,19 @@ The contract mirrors the web app's repository ports (`apps/web/src/domain`), so 
 in-memory repository for HTTP without touching screens. JSON is camel case, enumerations are
 lower-case strings, dates are `YYYY-MM-DD`, and timestamps are ISO 8601 in UTC.
 
-| Method and path               | Purpose                                                                | Success          |
-| ----------------------------- | ---------------------------------------------------------------------- | ---------------- |
-| `GET /health`                 | Liveness probe (anonymous)                                             | 200              |
-| `GET /garments`               | Wardrobe: `?category=&color=&size=&q=&status=`                         | 200              |
-| `GET /garments/{id}`          | One garment                                                            | 200              |
-| `GET /products/{id}`          | One catalog product                                                    | 200              |
-| `POST /garments`              | Add a garment by hand                                                  | 201 + `Location` |
-| `PATCH /garments/{id}`        | Partial edit: absent fields untouched, `null` clears                   | 200              |
-| `POST /garments/{id}/archive` | Archive                                                                | 200              |
-| `POST /garments/{id}/restore` | Restore                                                                | 200              |
-| `GET /openapi/v1.json`        | OpenAPI document with the bearer token scheme (Development, anonymous) | 200              |
-| `GET /scalar/v1`              | API reference UI (Development, anonymous)                              | 200              |
+| Method and path               | Purpose                                                                        | Success          |
+| ----------------------------- | ------------------------------------------------------------------------------ | ---------------- |
+| `GET /health`                 | Liveness probe (anonymous)                                                     | 200              |
+| `GET /garments`               | Wardrobe: `?category=&color=&size=&q=&status=`                                 | 200              |
+| `GET /garments/{id}`          | One garment                                                                    | 200              |
+| `GET /products/{id}`          | One catalog product                                                            | 200              |
+| `POST /garments`              | Add a garment by hand                                                          | 201 + `Location` |
+| `PATCH /garments/{id}`        | Partial edit: absent fields untouched, `null` clears                           | 200              |
+| `POST /garments/{id}/archive` | Archive                                                                        | 200              |
+| `POST /garments/{id}/restore` | Restore                                                                        | 200              |
+| `POST /photos/uploads`        | Upload ticket: a presigned PUT to the caller's staging area, valid ten minutes | 200              |
+| `GET /openapi/v1.json`        | OpenAPI document with the bearer token scheme (Development, anonymous)         | 200              |
+| `GET /scalar/v1`              | API reference UI (Development, anonymous)                                      | 200              |
 
 The OpenAPI document declares the bearer token as a security requirement of every operation, so
 the API reference at `/scalar/v1` can send one.
@@ -147,7 +166,20 @@ Enumerations in the query string are matched by name, ignoring case; numbers, co
 lists and repeated parameters are rejected with `request.invalid`. `PATCH` on an archived garment
 answers `409 garment.archived_read_only` whatever the body contains.
 
-`photoUrl` is always `null` until phase 6 attaches photos. Lists are not paginated in v1.
+A photo reaches a garment in three steps ([ADR-0032](../adr/0032-upload-photos-straight-to-storage-through-a-staging-prefix.md)):
+`POST /photos/uploads` with the declared `contentType` and `size` answers `uploadId`, `url`,
+`method` (`PUT`), `headers` and `expiresAt`; the browser uploads the file to `url` with exactly
+those headers and no token; the garment request then refers to the photo as
+`"photo": { "uploadId": "…" }`.
+
+In `POST /garments` and `PATCH /garments/{id}`, `photo` is `{ "uploadId": "…" }` to set or
+replace the photo, and `null` in `PATCH` to remove it; absent, the photo stays as it is. The API
+checks the uploaded object's real size and type, moves it under the owner's photos, and deletes a
+replaced or removed photo after the change commits (a failed deletion is logged and does not fail
+the edit).
+A photo is only moved once every other rule of the request has passed.
+
+`photoUrl` is a presigned URL, valid for one hour, that loads the photo straight from storage; `null` when the garment has no photo. Every response signs anew; a page open for longer than an hour loads new URLs the next time it asks for the garment. Lists are not paginated in v1.
 
 Request bodies are validated for shape only (required properties, known enumeration values);
 ranges and formats are the domain's, so a rejected amount or currency comes back with the domain's
