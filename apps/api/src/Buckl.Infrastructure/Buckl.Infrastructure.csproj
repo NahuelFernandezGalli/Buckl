@@ -12,6 +12,9 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Buckl.Infrastructure.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../Buckl.Application/Buckl.Application.csproj" />
   </ItemGroup>
 </Project>

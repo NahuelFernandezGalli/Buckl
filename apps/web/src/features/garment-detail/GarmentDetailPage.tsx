@@ -1,6 +1,6 @@
 import { useParams } from 'react-router'
+import { LoadError } from '../../app/LoadError'
 import { usePageTitle } from '../../app/usePageTitle'
-import { Button } from '../../components/Button/Button'
 import { garmentTitle } from '../../lib/garment-title'
 import { GarmentActions } from './GarmentActions'
 import { GarmentDetail } from './GarmentDetail'
@@ -22,10 +22,7 @@ export function GarmentDetailPage() {
     return (
       <>
         <h1>Garment</h1>
-        <p role="alert">{state.message}</p>
-        <Button variant="secondary" onClick={retry}>
-          Try again
-        </Button>
+        <LoadError message={state.message} onRetry={retry} />
       </>
     )
   }
