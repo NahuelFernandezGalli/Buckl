@@ -11,6 +11,9 @@ signs in through the Auth0 development tenant; the test users are described in
 Run from the repository root with the workspace scripts (`npm run dev -w web`, `npm run test -w
 web`) or from this directory with `npm run dev`, `npm run test`, `npm run build`.
 
+The app needs the API running (`apps/api`, see its README) and a photo bucket configured there;
+there is no offline or sample-data mode.
+
 Design and architecture live in [`docs/`](../../docs/README.md).
 
 The folder layout, routing and data access are described in
