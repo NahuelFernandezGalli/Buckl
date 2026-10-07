@@ -115,8 +115,8 @@ API writes them as a side effect of imports. A product row carries no personal d
   constants on the type that raises them (`Money.Errors.NegativeAmount`) and are listed under
   [error codes](#error-codes).
 - The web app keeps a TypeScript read model of these types in `apps/web/src/domain`
-  ([Web app](web-app.md)). It is maintained by hand until phase 6 derives it from the API's
-  OpenAPI document.
+  ([Web app](web-app.md)). It is maintained by hand, pinned by tests on both sides
+  ([ADR-0034](../adr/0034-mirror-the-api-contract-by-hand-in-the-web-app.md)).
 
 ## Ports
 
