@@ -1,9 +1,11 @@
 using Buckl.Application.Garments;
+using Buckl.Application.Photos;
 using Buckl.Application.Tests.Fakes;
 using Buckl.Domain.Common;
 using Buckl.Domain.Garments;
 using Buckl.Domain.Users;
 using Buckl.Testing;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Buckl.Application.Tests.Garments;
 
@@ -14,6 +16,8 @@ public class CreateGarmentHandlerTests
     private readonly InMemoryGarmentRepository _repository = new();
 
     private readonly SpyUnitOfWork _unitOfWork = new();
+
+    private readonly InMemoryPhotoStorage _storage = new();
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -75,9 +79,41 @@ public class CreateGarmentHandlerTests
         Assert.Equal(0, _unitOfWork.SaveCount);
     }
 
+    [Fact]
+    public async Task HandleAsync_adds_the_garment_with_its_uploaded_photo()
+    {
+        var uploadId = Guid.NewGuid();
+        _storage.Put(PhotoUploads.StagingKey(Alice, uploadId), 150_000);
+        var command = new CreateGarmentCommand(new ClassificationInput(Category.Top, Color.Blue, "M"), null, null, uploadId);
+
+        var garment = await Handler().HandleAsync(command, Ct);
+
+        Assert.Equal($"users/{Alice.Value:D}/garments/{uploadId:N}.jpg", garment.PhotoKey?.Value);
+        Assert.Equal(1, _unitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task HandleAsync_does_not_move_the_photo_of_a_garment_it_rejects()
+    {
+        var uploadId = Guid.NewGuid();
+        var staging = PhotoUploads.StagingKey(Alice, uploadId);
+        _storage.Put(staging, 150_000);
+        var command = new CreateGarmentCommand(
+            new ClassificationInput(Category.Top, Color.Blue, null),
+            null,
+            new string('n', Garment.MaxNotesLength + 1),
+            uploadId);
+
+        await Assert.ThrowsAsync<DomainValidationException>(() => Handler().HandleAsync(command, Ct));
+
+        Assert.True(_storage.Contains(staging));
+        Assert.Empty(_repository.Stored);
+    }
+
     private CreateGarmentHandler Handler() => new(
         _repository,
         _unitOfWork,
         new FakeCurrentUser(Alice),
-        new FixedTimeProvider(TestClock.Now));
+        new FixedTimeProvider(TestClock.Now),
+        new PhotoAttacher(_storage, NullLogger<PhotoAttacher>.Instance));
 }

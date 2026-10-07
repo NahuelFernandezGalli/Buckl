@@ -100,4 +100,34 @@ public class UserTransactionFilterTests
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.False(await _api.Database.ProductExistsAsync(productId, Ct));
     }
+
+    [Fact]
+    public async Task Work_queued_after_commit_runs_when_the_action_succeeds()
+    {
+        using var client = _api.CreateClientFor(Subjects.New());
+        var name = Guid.NewGuid().ToString("N");
+
+        using var response = await client.PostAsync(
+            new Uri($"/test/probe/after-commit/{name}?fail=false", UriKind.Relative),
+            content: null,
+            Ct);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.True(AfterCommitProbe.HasRun(name));
+    }
+
+    [Fact]
+    public async Task Work_queued_after_commit_does_not_run_when_the_action_fails()
+    {
+        using var client = _api.CreateClientFor(Subjects.New());
+        var name = Guid.NewGuid().ToString("N");
+
+        using var response = await client.PostAsync(
+            new Uri($"/test/probe/after-commit/{name}?fail=true", UriKind.Relative),
+            content: null,
+            Ct);
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.False(AfterCommitProbe.HasRun(name));
+    }
 }

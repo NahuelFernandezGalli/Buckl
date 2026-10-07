@@ -1,10 +1,12 @@
 using Buckl.Application.Common;
 using Buckl.Application.Garments;
+using Buckl.Application.Photos;
 using Buckl.Application.Tests.Fakes;
 using Buckl.Domain.Common;
 using Buckl.Domain.Garments;
 using Buckl.Domain.Users;
 using Buckl.Testing;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Buckl.Application.Tests.Garments;
 
@@ -15,6 +17,10 @@ public class UpdateGarmentHandlerTests
     private static readonly DateTimeOffset Later = TestClock.Now.AddDays(1);
 
     private readonly SpyUnitOfWork _unitOfWork = new();
+
+    private readonly InMemoryPhotoStorage _storage = new();
+
+    private readonly RecordingAfterCommit _afterCommit = new();
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -128,9 +134,92 @@ public class UpdateGarmentHandlerTests
         Assert.Equal(PurchaseInfo.Errors.DateInFuture, exception.Code);
     }
 
+    [Fact]
+    public async Task HandleAsync_replaces_the_photo_and_lets_go_of_the_old_one()
+    {
+        var old = TestGarments.PhotoFor(Alice);
+        _storage.Put(old.Value, 1000);
+        var garment = TestGarments.Active(Alice, photoKey: old);
+        var uploadId = Guid.NewGuid();
+        _storage.Put(PhotoUploads.StagingKey(Alice, uploadId), 2000);
+        var command = new UpdateGarmentCommand(garment.Id, default, default, default, new FieldUpdate<Guid?>(uploadId));
+
+        var updated = await Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct);
+
+        Assert.Equal($"users/{Alice.Value:D}/garments/{uploadId:N}.jpg", updated.PhotoKey?.Value);
+        Assert.Equal(1, _unitOfWork.SaveCount);
+        Assert.True(_storage.Contains(old.Value));
+
+        await _afterCommit.RunAllAsync();
+
+        Assert.False(_storage.Contains(old.Value));
+    }
+
+    [Fact]
+    public async Task HandleAsync_removes_the_photo_when_it_is_set_to_null()
+    {
+        var old = TestGarments.PhotoFor(Alice);
+        _storage.Put(old.Value, 1000);
+        var garment = TestGarments.Active(Alice, photoKey: old);
+        var command = new UpdateGarmentCommand(garment.Id, default, default, default, new FieldUpdate<Guid?>(null));
+
+        var updated = await Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct);
+
+        Assert.Null(updated.PhotoKey);
+        Assert.True(_storage.Contains(old.Value));
+
+        await _afterCommit.RunAllAsync();
+
+        Assert.False(_storage.Contains(old.Value));
+    }
+
+    [Fact]
+    public async Task HandleAsync_deletes_nothing_until_the_transaction_commits()
+    {
+        var old = TestGarments.PhotoFor(Alice);
+        _storage.Put(old.Value, 1000);
+        var garment = TestGarments.Active(Alice, photoKey: old);
+        var command = new UpdateGarmentCommand(garment.Id, default, default, default, new FieldUpdate<Guid?>(null));
+
+        await Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct);
+
+        Assert.Equal(1, _afterCommit.Pending);
+        Assert.Empty(_storage.Deleted);
+    }
+
+    [Fact]
+    public async Task HandleAsync_keeps_the_photo_when_the_command_leaves_it_alone()
+    {
+        var photo = TestGarments.PhotoFor(Alice);
+        var garment = TestGarments.Active(Alice, photoKey: photo);
+        var command = new UpdateGarmentCommand(garment.Id, default, default, new FieldUpdate<string?>("Linen"));
+
+        var updated = await Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct);
+
+        Assert.Equal(photo, updated.PhotoKey);
+        Assert.Equal(0, _afterCommit.Pending);
+    }
+
+    [Fact]
+    public async Task HandleAsync_leaves_the_upload_alone_for_an_archived_garment()
+    {
+        var garment = TestGarments.Archived(Alice);
+        var uploadId = Guid.NewGuid();
+        var staging = PhotoUploads.StagingKey(Alice, uploadId);
+        _storage.Put(staging, 2000);
+        var command = new UpdateGarmentCommand(garment.Id, default, default, default, new FieldUpdate<Guid?>(uploadId));
+
+        await Assert.ThrowsAsync<ArchivedGarmentIsReadOnlyException>(
+            () => Handler(new InMemoryGarmentRepository(garment)).HandleAsync(command, Ct));
+
+        Assert.True(_storage.Contains(staging));
+    }
+
     private UpdateGarmentHandler Handler(InMemoryGarmentRepository repository) => new(
         repository,
         _unitOfWork,
         new FakeCurrentUser(Alice),
-        new FixedTimeProvider(Later));
+        new FixedTimeProvider(Later),
+        new PhotoAttacher(_storage, NullLogger<PhotoAttacher>.Instance),
+        _afterCommit);
 }
