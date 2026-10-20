@@ -1,4 +1,5 @@
 import { useParams } from 'react-router'
+import { LoadError } from '../../app/LoadError'
 import { usePageTitle } from '../../app/usePageTitle'
 import { garmentTitle } from '../../lib/garment-title'
 import { GarmentActions } from './GarmentActions'
@@ -8,7 +9,7 @@ import { useGarment } from './useGarment'
 
 export function GarmentDetailPage() {
   const { garmentId = '' } = useParams()
-  const { state, setGarment } = useGarment(garmentId)
+  const { state, setGarment, retry } = useGarment(garmentId)
   usePageTitle(state.status === 'ready' ? garmentTitle(state.garment) : 'Garment')
 
   if (state.status === 'loading') {
@@ -21,7 +22,7 @@ export function GarmentDetailPage() {
     return (
       <>
         <h1>Garment</h1>
-        <p role="alert">{state.message}</p>
+        <LoadError message={state.message} onRetry={retry} />
       </>
     )
   }

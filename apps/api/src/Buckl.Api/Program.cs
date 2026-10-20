@@ -1,10 +1,13 @@
 using Buckl.Api.Authentication;
+using Buckl.Api.Binding;
 using Buckl.Api.Errors;
 using Buckl.Api.Filters;
 using Buckl.Api.Json;
 using Buckl.Api.OpenApi;
+using Buckl.Api.Photos;
 using Buckl.Api.Security;
 using Buckl.Application;
+using Buckl.Application.Abstractions;
 using Buckl.Infrastructure;
 using Scalar.AspNetCore;
 
@@ -13,13 +16,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services.AddApplication();
+builder.Services.AddScoped<AfterCommitActions>();
+builder.Services.AddScoped<IAfterCommit>(provider => provider.GetRequiredService<AfterCommitActions>());
+builder.Services.AddSingleton<PhotoUrls>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddBucklAuthentication(builder.Configuration);
 builder.Services.AddBucklSecurity(builder.Configuration);
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = ProblemCodes.AddDefaultCode);
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services
-    .AddControllers(options => options.Filters.Add<UserTransactionFilter>())
+    .AddControllers(options =>
+    {
+        options.Filters.Add<UserTransactionFilter>();
+        options.ModelBinderProviders.Insert(0, new StrictEnumModelBinderProvider());
+    })
     .AddJsonOptions(options => BucklJson.Configure(options.JsonSerializerOptions));
 builder.Services.ConfigureHttpJsonOptions(options => BucklJson.Configure(options.SerializerOptions));
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());

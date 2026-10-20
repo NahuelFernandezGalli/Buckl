@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet } from 'react-router'
 import { Button } from '../components/Button/Button'
 import { useSession } from '../session/useSession'
 import styles from './AppLayout.module.css'
+import { SessionExpiredNotice } from './SessionExpiredNotice'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink
@@ -32,6 +33,7 @@ export function AppLayout() {
         </NavLink>
       </nav>
       <main className={styles.main}>
+        <SessionExpiredNotice />
         <Outlet />
       </main>
     </div>

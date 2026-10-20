@@ -68,6 +68,13 @@ tests are about.
   invalid ones, changing one property of a valid token. Token lifetimes use the real clock,
   because the JWT handler does.
 
+### Photo storage
+
+Tests of the API and of the use cases use `InMemoryPhotoStorage` (`Buckl.Testing`), whose signed
+URLs are readable fakes and whose `Put` plays the browser's upload. `S3PhotoStorageTests` run the
+real adapter against Floci, an S3 emulator started by Testcontainers (`S3Emulator`); MinIO no
+longer publishes images.
+
 ## The front-end cycle
 
 Every feature that changes what a user can see or do goes through four steps, in this order. The
@@ -194,7 +201,12 @@ the safety net, so this step is where design happens rather than in step 3.
 
 - Pure helpers with no user-visible behavior of their own, such as image compression, currency
   formatting or a URL parser. These get plain Vitest unit tests, driven by the usual red, green,
-  refactor cycle.
+  refactor cycle. `browserPhotoCodec` is the one piece of the photo pipeline without unit tests
+  (jsdom has neither `createImageBitmap` nor canvas); the manual check is in the phase 6
+  verification: a portrait and a landscape phone photo, orientation and missing EXIF.
+- Code that talks HTTP is tested with `fakeFetch` (`src/test/fake-fetch.ts`): a route table that
+  records every request, used with the real `createApiClient` through `testApiClient`. No request
+  leaves the test; an unknown route fails like a network error.
 - Design tokens, layout and styling. Appearance is reviewed by looking at it, not asserted in
   tests.
 - Third-party behavior. We test that we call the Auth0 SDK and how we react to its answers, not

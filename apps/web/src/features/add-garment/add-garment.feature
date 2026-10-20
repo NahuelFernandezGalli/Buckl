@@ -44,3 +44,12 @@ Feature: Add a garment
     When the user chooses the category "Footwear" and the color "White"
     And saves the garment
     Then the detail of the new garment is titled "White footwear"
+
+  Scenario: a photo that fails to upload keeps the form filled in
+    Given the connection drops while the photo is uploaded
+    When the user takes a photo of the garment
+    And chooses the category "Top" and the color "Blue"
+    And saves the garment
+    Then the form says the photo could not be uploaded
+    And the category "Top" and the color "Blue" are still chosen
+    And nothing was added to the wardrobe

@@ -9,7 +9,6 @@ export interface ApiClientOptions {
 /**
  * The only way the web app talks to the Buckl API: every request carries the user's access token,
  * and the resolved URL is checked to stay under the API root before the token is ever asked for.
- * Phase 6 builds the typed repositories on top of it.
  */
 export interface ApiClient {
   /** `path` is relative to the API root and starts with a single `/`: `/garments?status=active`. */

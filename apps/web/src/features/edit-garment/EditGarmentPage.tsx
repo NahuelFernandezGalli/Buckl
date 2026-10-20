@@ -1,4 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router'
+import { LoadError } from '../../app/LoadError'
 import { usePageTitle } from '../../app/usePageTitle'
 import { useRepositories } from '../../app/useRepositories'
 import type { GarmentChanges } from '../../domain/garment-repository'
@@ -12,7 +13,7 @@ export function EditGarmentPage() {
   const { garmentId = '' } = useParams()
   const { garments } = useRepositories()
   const navigate = useNavigate()
-  const { state } = useGarment(garmentId)
+  const { state, retry } = useGarment(garmentId)
 
   if (state.status === 'loading') {
     return <p role="status">Loading the garment…</p>
@@ -24,7 +25,7 @@ export function EditGarmentPage() {
     return (
       <>
         <h1>Edit garment</h1>
-        <p role="alert">{state.message}</p>
+        <LoadError message={state.message} onRetry={retry} />
       </>
     )
   }

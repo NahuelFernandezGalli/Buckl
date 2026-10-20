@@ -9,3 +9,6 @@ obj/
 .DS_Store
 *.log
 scripts/
+
+# any local JPEG, for the photo requests in Buckl.Api.http
+apps/api/src/Buckl.Api/sample-photo.jpg

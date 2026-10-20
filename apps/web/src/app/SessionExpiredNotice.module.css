@@ -1,0 +1,16 @@
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-soft);
+}
+
+.message {
+  margin: 0;
+  font-weight: 600;
+}

@@ -1,5 +1,6 @@
 using Buckl.Domain.Common;
 using Buckl.Domain.Products;
+using Buckl.Infrastructure.Persistence;
 using Buckl.Infrastructure.Persistence.Mapping;
 using Buckl.Testing;
 
@@ -27,6 +28,18 @@ public class ProductMapperTests
         Assert.Equal(product.SourceUrl, restored.SourceUrl);
         Assert.Equal(product.Source, restored.Source);
         Assert.Equal(product.CreatedAt, restored.CreatedAt);
+    }
+
+    [Fact]
+    public void ToDomain_reports_a_row_that_breaks_a_domain_rule_as_corrupt_data()
+    {
+        var record = ProductMapper.ToRecord(Product.Create("Oxford shirt", ImportSource.Url, TestClock.Now));
+        record.Name = " ";
+
+        var exception = Assert.Throws<CorruptRecordException>(() => ProductMapper.ToDomain(record));
+
+        var rule = Assert.IsType<DomainValidationException>(exception.InnerException);
+        Assert.Equal(Product.Errors.NameEmpty, rule.Code);
     }
 
     [Fact]

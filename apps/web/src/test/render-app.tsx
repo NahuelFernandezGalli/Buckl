@@ -3,6 +3,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import type { Repositories } from '../app/RepositoriesContext'
 import { RepositoriesProvider } from '../app/RepositoriesProvider'
 import { routes } from '../app/routes'
+import { SessionExpiryContext } from '../app/SessionExpiryContext'
 import { InMemoryGarmentRepository } from '../data/in-memory-garment-repository'
 import { InMemoryProductRepository } from '../data/in-memory-product-repository'
 import type { Session } from '../session/session'
@@ -14,12 +15,15 @@ export interface RenderAppOptions {
   repositories?: Partial<Repositories>
   /** Signed in as Alice unless the scenario says otherwise. */
   session?: Session
+  /** Shows the "Your session expired" notice, as when the API refused the token. */
+  sessionExpired?: boolean
 }
 
 export function renderApp({
   route = '/wardrobe',
   repositories = {},
   session = fakeSession(),
+  sessionExpired = false,
 }: RenderAppOptions = {}) {
   const value: Repositories = {
     garments: repositories.garments ?? new InMemoryGarmentRepository(),
@@ -32,9 +36,11 @@ export function renderApp({
     session,
     ...render(
       <SessionContext.Provider value={session}>
-        <RepositoriesProvider repositories={value}>
-          <RouterProvider router={router} />
-        </RepositoriesProvider>
+        <SessionExpiryContext.Provider value={{ expired: sessionExpired }}>
+          <RepositoriesProvider repositories={value}>
+            <RouterProvider router={router} />
+          </RepositoriesProvider>
+        </SessionExpiryContext.Provider>
       </SessionContext.Provider>,
     ),
   }

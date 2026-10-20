@@ -2,10 +2,11 @@ import { describeFeature, loadFeature } from '@amiceli/vitest-cucumber'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect } from 'vitest'
-import { InMemoryGarmentRepository } from '../../data/in-memory-garment-repository'
+import { PhotoUploadError } from '../../data/photos/photo-uploader'
 import { DEFAULT_WARDROBE_FILTER } from '../../domain/wardrobe-filter'
 import { todayIsoDate } from '../../lib/dates'
 import { renderApp } from '../../test/render-app'
+import { ScriptedGarmentRepository } from '../../test/scripted-garment-repository'
 
 const feature = await loadFeature('./add-garment.feature')
 
@@ -21,7 +22,7 @@ describeFeature(feature, ({ Background, Scenario, AfterEachScenario }) => {
   AfterEachScenario(() => cleanup())
 
   const user = userEvent.setup()
-  let repository: InMemoryGarmentRepository
+  let repository: ScriptedGarmentRepository
 
   const chooseCategoryAndColor = async (category: string, color: string) => {
     await user.selectOptions(screen.getByLabelText('Category'), category)
@@ -48,7 +49,7 @@ describeFeature(feature, ({ Background, Scenario, AfterEachScenario }) => {
 
   Background(({ Given }) => {
     Given('the user is on the add garment screen', () => {
-      repository = new InMemoryGarmentRepository()
+      repository = new ScriptedGarmentRepository()
       renderApp({ route: '/garments/new', repositories: { garments: repository } })
     })
   })
@@ -152,4 +153,34 @@ describeFeature(feature, ({ Background, Scenario, AfterEachScenario }) => {
       expectDetailTitled(title),
     )
   })
+
+  Scenario(
+    'a photo that fails to upload keeps the form filled in',
+    ({ Given, When, And, Then }) => {
+      Given('the connection drops while the photo is uploaded', () => {
+        repository.failures.create.push(new PhotoUploadError(new TypeError('Failed to fetch')))
+      })
+      When('the user takes a photo of the garment', async () => {
+        await user.upload(screen.getByLabelText('Take photo'), imageFile())
+      })
+      And(
+        'chooses the category {string} and the color {string}',
+        (_ctx, category: string, color: string) => chooseCategoryAndColor(category, color),
+      )
+      And('saves the garment', save)
+      Then('the form says the photo could not be uploaded', async () => {
+        expect(await screen.findByRole('alert')).toHaveTextContent(
+          'The photo could not be uploaded. Check your connection and try again.',
+        )
+      })
+      And(
+        'the category {string} and the color {string} are still chosen',
+        (_ctx, category: string, color: string) => {
+          expect(screen.getByRole('combobox', { name: 'Category' })).toHaveDisplayValue(category)
+          expect(screen.getByRole('combobox', { name: 'Color' })).toHaveDisplayValue(color)
+        },
+      )
+      And('nothing was added to the wardrobe', expectNothingAdded)
+    },
+  )
 })

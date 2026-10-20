@@ -20,6 +20,30 @@ Content-Type: application/json
   "notes": "Oxford shirt"
 }
 
+### Alice asks where to upload a photo
+# @name ticket
+POST {{api}}/photos/uploads
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "contentType": "image/jpeg", "size": 150000 }
+
+### The browser's part: the photo goes straight to B2, without a token (the URL is the credential)
+PUT {{ticket.response.body.$.url}}
+Content-Type: image/jpeg
+
+< ./sample-photo.jpg
+
+### Alice adds a garment with that photo
+POST {{api}}/garments
+Authorization: {{alice}}
+Content-Type: application/json
+
+{
+  "classification": { "category": "top", "color": "white" },
+  "photo": { "uploadId": "{{ticket.response.body.$.uploadId}}" }
+}
+
 ### Alice's wardrobe: one garment
 GET {{api}}/garments
 Authorization: {{alice}}

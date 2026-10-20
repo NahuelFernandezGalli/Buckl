@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { describeError } from '../../app/describe-error'
 import { useRepositories } from '../../app/useRepositories'
 import { Button } from '../../components/Button/Button'
 import { ButtonLink } from '../../components/Button/ButtonLink'
@@ -27,7 +28,7 @@ export function GarmentActions({ garment, onChanged }: GarmentActionsProps) {
     try {
       onChanged(await action())
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not update the garment.')
+      setError(describeError(caught, 'Could not update the garment.'))
     } finally {
       setConfirming(false)
     }

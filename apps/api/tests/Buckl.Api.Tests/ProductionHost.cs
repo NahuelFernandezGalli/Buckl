@@ -16,7 +16,12 @@ internal static class ProductionHost
             builder
                 .UseEnvironment(Environments.Production)
                 .UseSetting("Auth0:Domain", TestTokens.Domain)
-                .UseSetting("Auth0:Audience", TestTokens.Audience);
+                .UseSetting("Auth0:Audience", TestTokens.Audience)
+                .UseSetting("PhotoStorage:ServiceUrl", "https://storage.buckl.test")
+                .UseSetting("PhotoStorage:Region", "us-test-001")
+                .UseSetting("PhotoStorage:Bucket", "buckl-photos-test")
+                .UseSetting("PhotoStorage:AccessKeyId", "test")
+                .UseSetting("PhotoStorage:SecretAccessKey", "test");
 
             foreach (var (key, value) in settings)
             {

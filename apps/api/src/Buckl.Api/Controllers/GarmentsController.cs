@@ -1,4 +1,5 @@
 using Buckl.Api.Contracts;
+using Buckl.Api.Photos;
 using Buckl.Application.Garments;
 using Buckl.Domain.Garments;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,13 @@ namespace Buckl.Api.Controllers;
 [Route("garments")]
 public sealed class GarmentsController : ControllerBase
 {
+    private readonly PhotoUrls _photoUrls;
+
+    public GarmentsController(PhotoUrls photoUrls)
+    {
+        _photoUrls = photoUrls;
+    }
+
     [HttpGet]
     public async Task<IReadOnlyList<GarmentResponse>> List(
         [FromQuery] WardrobeQuery query,
@@ -21,7 +29,7 @@ public sealed class GarmentsController : ControllerBase
 
         var garments = await handler.HandleAsync(query.ToFilter(), cancellationToken);
 
-        return garments.Select(GarmentResponse.From).ToList();
+        return garments.Select(garment => GarmentResponse.From(garment, _photoUrls)).ToList();
     }
 
     [HttpGet("{id:guid}")]
@@ -29,7 +37,7 @@ public sealed class GarmentsController : ControllerBase
         Guid id,
         [FromServices] GetGarmentHandler handler,
         CancellationToken cancellationToken) =>
-        GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken));
+        GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken), _photoUrls);
 
     [HttpPost]
     public async Task<ActionResult<GarmentResponse>> Create(
@@ -41,7 +49,7 @@ public sealed class GarmentsController : ControllerBase
 
         var garment = await handler.HandleAsync(request.ToCommand(), cancellationToken);
 
-        return CreatedAtAction(nameof(Get), new { id = garment.Id.Value }, GarmentResponse.From(garment));
+        return CreatedAtAction(nameof(Get), new { id = garment.Id.Value }, GarmentResponse.From(garment, _photoUrls));
     }
 
     [HttpPatch("{id:guid}")]
@@ -54,7 +62,8 @@ public sealed class GarmentsController : ControllerBase
         ArgumentNullException.ThrowIfNull(request);
 
         return GarmentResponse.From(
-            await handler.HandleAsync(request.ToCommand(new GarmentId(id)), cancellationToken));
+            await handler.HandleAsync(request.ToCommand(new GarmentId(id)), cancellationToken),
+            _photoUrls);
     }
 
     [HttpPost("{id:guid}/archive")]
@@ -62,12 +71,12 @@ public sealed class GarmentsController : ControllerBase
         Guid id,
         [FromServices] ArchiveGarmentHandler handler,
         CancellationToken cancellationToken) =>
-        GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken));
+        GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken), _photoUrls);
 
     [HttpPost("{id:guid}/restore")]
     public async Task<GarmentResponse> Restore(
         Guid id,
         [FromServices] RestoreGarmentHandler handler,
         CancellationToken cancellationToken) =>
-        GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken));
+        GarmentResponse.From(await handler.HandleAsync(new GarmentId(id), cancellationToken), _photoUrls);
 }
